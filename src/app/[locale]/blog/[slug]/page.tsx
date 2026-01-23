@@ -4,7 +4,7 @@ import { blogPosts } from "@/lib/blog-data";
 import { Calendar, User, ArrowLeft, Share2, Tag } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import AdBanner from "@/components/AdBanner";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 
 interface PageProps {
@@ -13,6 +13,7 @@ interface PageProps {
 
 export default async function BlogPostPage({ params }: PageProps) {
     const { slug, locale } = await params;
+    setRequestLocale(locale);
     const post = blogPosts.find((p) => p.slug === slug);
     const t = await getTranslations({ locale, namespace: 'blog' });
 

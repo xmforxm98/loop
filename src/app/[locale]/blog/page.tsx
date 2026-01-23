@@ -1,12 +1,22 @@
-"use client";
 import React from "react";
 import { Link } from "@/i18n/routing";
 import { blogPosts } from "@/lib/blog-data";
 import { Calendar, User, ArrowRight } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
 
-export default function BlogListPage() {
-    const t = useTranslations('blog');
+export function generateStaticParams() {
+    return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function BlogListPage({
+    params
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations({ locale, namespace: 'blog' });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

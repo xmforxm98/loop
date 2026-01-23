@@ -1,10 +1,20 @@
-"use client";
 import React from "react";
 import { Shield, Zap, Lock, Globe, Cpu, Heart } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
 
-export default function AboutPage() {
-    const t = useTranslations('about');
+export function generateStaticParams() {
+    return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function AboutPage({
+    params
+}: {
+    params: Promise<{ locale: string }>;
+}) {
+    const { locale } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations({ locale, namespace: 'about' });
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

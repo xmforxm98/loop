@@ -3,7 +3,7 @@ import "../globals.css"; // Moved up one level
 import Script from 'next/script';
 import Navbar from "@/components/Navbar";
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 
@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: "Edit-All | Unlimited Browser-based Audio Editor",
   description: "Merge, loop, and extend your audio files locally in your browser. No server uploads, total privacy, and high speed.",
 };
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 export default async function RootLayout({
   children,
@@ -21,8 +25,11 @@ export default async function RootLayout({
 }) {
   const { locale } = await params;
 
+  // Enable static rendering
+  setRequestLocale(locale);
+
   // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as typeof routing.locales[number])) {
     notFound();
   }
 
