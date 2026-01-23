@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Loop | Unlimited Browser-based Audio Editor",
@@ -21,7 +23,8 @@ export default function RootLayout({
         ></script>
       </head>
       <body>
-        <main>{children}</main>
+        <Navbar />
+        <main className="pt-16">{children}</main>
         <footer className="py-12 border-t border-border mt-20">
           <div className="container text-center">
             <p className="text-secondary text-sm mb-4">

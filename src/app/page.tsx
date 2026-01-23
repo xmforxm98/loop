@@ -24,6 +24,8 @@ import "./audio-editor.css";
 
 import WaveformTrimmer from "@/components/WaveformTrimmer";
 import AdBanner from "@/components/AdBanner";
+import { blogPosts } from "@/lib/blog-data";
+import Link from "next/link";
 
 type Tool = "merge" | "loop" | "extend" | "trim";
 
@@ -531,6 +533,37 @@ export default function AudioEditor() {
               We process everything inside your browser's RAM. Your files never touch our servers, ensuring 100% privacy and legal compliance.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Recent Blog Posts Preview */}
+      <section className="mt-32 max-w-5xl mx-auto">
+        <div className="flex justify-between items-end mb-10">
+          <div>
+            <h2 className="text-3xl font-bold outfit mb-2">From the Blog</h2>
+            <p className="text-secondary">Audio production tips and updates</p>
+          </div>
+          <Link href="/blog" className="text-primary font-bold hover:underline flex items-center gap-2">
+            View All <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {blogPosts.slice(0, 3).map((post) => (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              className="glass p-5 rounded-[2rem] border-transparent hover:border-primary/20 transition-all group"
+            >
+              <img
+                src={post.image}
+                className="w-full h-32 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform"
+                alt={post.title}
+              />
+              <h4 className="font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">{post.title}</h4>
+              <p className="text-xs text-secondary line-clamp-3">{post.excerpt}</p>
+            </Link>
+          ))}
         </div>
       </section>
 
