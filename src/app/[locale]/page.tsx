@@ -20,16 +20,19 @@ import {
 } from "lucide-react";
 import { fetchFile } from "@ffmpeg/util";
 import { useFFmpeg } from "@/hooks/useFFmpeg";
-import "./audio-editor.css";
+import "../../app/audio-editor.css"; // Fixed relative path
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
 
 import WaveformTrimmer from "@/components/WaveformTrimmer";
 import AdBanner from "@/components/AdBanner";
 import { blogPosts } from "@/lib/blog-data";
-import Link from "next/link";
 
 type Tool = "merge" | "loop" | "extend" | "trim";
 
 export default function AudioEditor() {
+  const t = useTranslations('home');
+  const tNav = useTranslations('nav');
   const { ffmpeg, loaded, loading: ffmpegLoading, progress, load } = useFFmpeg();
   const [activeTool, setActiveTool] = useState<Tool>("merge");
   const [files, setFiles] = useState<File[]>([]);
@@ -124,9 +127,6 @@ export default function AudioEditor() {
     const outputName = "merged_output.mp3";
 
     if (crossfade > 0 && files.length > 1) {
-      // Complex filter for crossfade
-      // For 2 files: [0:a][1:a]acrossfade=d=0.5:c1=tri:c2=tri[a]
-      // For more files, we nest them.
       let inputs = fileNames.flatMap((name) => ["-i", name]);
       let filter = "[0:a][1:a]acrossfade=d=" + crossfade + ":c1=tri:c2=tri[a0]";
       for (let i = 2; i < files.length; i++) {
@@ -135,7 +135,6 @@ export default function AudioEditor() {
       const lastLabel = files.length > 1 ? `[a${files.length - 2}]` : "[0:a]";
       command = [...inputs, "-filter_complex", filter, "-map", lastLabel, outputName];
     } else {
-      // Simple concat
       const concatList = fileNames.map(n => `file '${n}'`).join("\n");
       await ffmpeg.writeFile("concat.txt", concatList);
       command = ["-f", "concat", "-safe", "0", "-i", "concat.txt", "-c", "copy", outputName];
@@ -152,11 +151,7 @@ export default function AudioEditor() {
     const inputName = `input.${ext}`;
     const outputName = "looped_output.mp3";
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
-
-    // ffmpeg -stream_loop [count-1] -i input.mp3 -c copy output.mp3
-    // Note: count 1 means play once, so -stream_loop 0. count 2 means repeat once, so -stream_loop 1.
     await ffmpeg.exec(["-stream_loop", (loopCount - 1).toString(), "-i", inputName, "-c", "copy", outputName]);
-
     const data = await ffmpeg.readFile(outputName);
     const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
     setResultUrl(url);
@@ -167,15 +162,8 @@ export default function AudioEditor() {
     const inputName = `input.${ext}`;
     const outputName = "extended_output.mp3";
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
-
-    // We need to know the duration of the input to calculate loop count
-    // But we can also just use a very large loop count and trim with -t
-    // To be safe, we'll try to get duration first or just use a safe large number if target is 90min.
-    // ffmpeg -stream_loop -1 -i input.mp3 -t [seconds] -c copy output.mp3
-    // -stream_loop -1 is infinite loop
     const targetSeconds = targetDuration * 60;
     await ffmpeg.exec(["-stream_loop", "-1", "-i", inputName, "-t", targetSeconds.toString(), "-c", "copy", outputName]);
-
     const data = await ffmpeg.readFile(outputName);
     const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
     setResultUrl(url);
@@ -186,15 +174,10 @@ export default function AudioEditor() {
       setError("No segments selected.");
       return;
     }
-
     const ext = files[0].name.split(".").pop();
     const inputName = `input.${ext}`;
     const outputName = "trimmed_output.mp3";
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
-
-    // Complex filter to extract multiple segments and merge them
-    // [0:a]atrim=start=S1:end=E1,asetpts=PTS-STARTPTS[a1];[0:a]atrim=start=S2:end=E2,asetpts=PTS-STARTPTS[a2];[a1][a2]concat=n=2:v=0:a=1[out]
-
     let filter = "";
     let inputs = "";
     segments.forEach((seg, i) => {
@@ -202,7 +185,6 @@ export default function AudioEditor() {
       inputs += `[a${i}]`;
     });
     filter += `${inputs}concat=n=${segments.length}:v=0:a=1[out]`;
-
     await ffmpeg.exec([
       "-i", inputName,
       "-filter_complex", filter,
@@ -211,7 +193,6 @@ export default function AudioEditor() {
       "-q:a", "2",
       outputName
     ]);
-
     const data = await ffmpeg.readFile(outputName);
     const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
     setResultUrl(url);
@@ -234,8 +215,7 @@ export default function AudioEditor() {
           Edit Audio <span className="gradient-text">Without Limits</span>
         </h1>
         <p className="text-xl text-secondary max-w-2xl mx-auto mb-10">
-          Professional audio tools powered by your browser. No server uploads,
-          unlimited file sizes, and total privacy for your music.
+          {t('hero.subtitle')}
         </p>
 
         {/* Tool Cards */}
@@ -245,24 +225,24 @@ export default function AudioEditor() {
             onClick={() => { setActiveTool("merge"); setFiles([]); setError(null); }}
           >
             <div className="icon-box"><Layers size={24} /></div>
-            <h3 className="text-xl font-bold mb-2">Merge Audio</h3>
-            <p className="text-sm opacity-80">Combine multiple tracks with seamless crossfades.</p>
+            <h3 className="text-xl font-bold mb-2">{t('tools.merge.title')}</h3>
+            <p className="text-sm opacity-80">{t('tools.merge.desc')}</p>
           </div>
           <div
             className={`tool-card ${activeTool === "loop" ? "active" : ""}`}
             onClick={() => { setActiveTool("loop"); setFiles([]); setError(null); }}
           >
             <div className="icon-box"><Repeat size={24} /></div>
-            <h3 className="text-xl font-bold mb-2">Loop Music</h3>
-            <p className="text-sm opacity-80">Repeat a track a specific number of times perfectly.</p>
+            <h3 className="text-xl font-bold mb-2">{t('tools.loop.title')}</h3>
+            <p className="text-sm opacity-80">{t('tools.loop.desc')}</p>
           </div>
           <div
             className={`tool-card ${activeTool === "extend" ? "active" : ""}`}
             onClick={() => { setActiveTool("extend"); setFiles([]); setError(null); }}
           >
             <div className="icon-box"><Clock size={24} /></div>
-            <h3 className="text-xl font-bold mb-2">Extend Length</h3>
-            <p className="text-sm opacity-80">Automatically loop music to reach a target duration.</p>
+            <h3 className="text-xl font-bold mb-2">{t('tools.extend.title')}</h3>
+            <p className="text-sm opacity-80">{t('tools.extend.desc')}</p>
           </div>
           <div
             className={`tool-card ${activeTool === "trim" ? "active" : ""}`}
@@ -271,8 +251,8 @@ export default function AudioEditor() {
             <div className="icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 6 2 2 2-2M3 18l2-2 2 2M12 6l2 2 2-2M12 18l2-2 2 2M18 12c.3 0 .5.2.5.5s-.2.5-.5.5h-4c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h4ZM8 12c.3 0 .5.2.5.5s-.2.5-.5.5H4c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h4Z" /><path d="M12 2v20M18 2v20" /></svg>
             </div>
-            <h3 className="text-xl font-bold mb-2">Trim Audio</h3>
-            <p className="text-sm opacity-80">Cut specific parts of your audio with precision.</p>
+            <h3 className="text-xl font-bold mb-2">{t('tools.trim.title')}</h3>
+            <p className="text-sm opacity-80">{t('tools.trim.desc')}</p>
           </div>
         </div>
       </section>
@@ -281,7 +261,7 @@ export default function AudioEditor() {
       <AdBanner dataAdSlot="XXXXXXXXXX" />
 
       {/* Main Action Area */}
-      <section className="max-w-3xl mx-auto glass rounded-[2rem] p-12 shadow-xl animate-fade-in" style={{ animationDelay: "0.2s" }}>
+      <section className="max-w-3xl mx-auto glass rounded-[2rem] p-12 shadow-xl animate-fade-in" style={{ animationDelay: "0.2s" }} id="editor">
         {/* Drop Zone */}
         {!isProcessing && !resultUrl && (
           <div
@@ -528,9 +508,9 @@ export default function AudioEditor() {
             <AlertCircle size={24} />
           </div>
           <div>
-            <h5 className="font-bold mb-1">Zero-Upload Policy</h5>
+            <h5 className="font-bold mb-1">{t('features.privacy.title')}</h5>
             <p className="text-sm text-secondary">
-              We process everything inside your browser's RAM. Your files never touch our servers, ensuring 100% privacy and legal compliance.
+              {t('features.privacy.desc')}
             </p>
           </div>
         </div>
@@ -540,11 +520,11 @@ export default function AudioEditor() {
       <section className="mt-32 max-w-5xl mx-auto">
         <div className="flex justify-between items-end mb-10">
           <div>
-            <h2 className="text-3xl font-bold outfit mb-2">From the Blog</h2>
+            <h2 className="text-3xl font-bold outfit mb-2">{t('recentPosts')}</h2>
             <p className="text-secondary">Audio production tips and updates</p>
           </div>
           <Link href="/blog" className="text-primary font-bold hover:underline flex items-center gap-2">
-            View All <ArrowRight size={16} />
+            {t('viewAllPosts')} <ArrowRight size={16} />
           </Link>
         </div>
 

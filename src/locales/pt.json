@@ -1,0 +1,84 @@
+{
+    "nav": {
+        "about": "About",
+        "blog": "Blog",
+        "tryEditor": "Try Editor"
+    },
+    "home": {
+        "hero": {
+            "title": "Edit Audio Without Limits",
+            "subtitle": "Merge, loop, and extend your audio files locally in your browser. No server uploads, total privacy, and high speed."
+        },
+        "tools": {
+            "merge": {
+                "title": "Merge Audio",
+                "desc": "Combine multiple tracks with seamless crossfades."
+            },
+            "loop": {
+                "title": "Loop Music",
+                "desc": "Repeat a track a specific number of times perfectly."
+            },
+            "extend": {
+                "title": "Extend Length",
+                "desc": "Automatically loop music to reach a target duration."
+            },
+            "trim": {
+                "title": "Trim Audio",
+                "desc": "Cut specific parts of your audio with precision."
+            }
+        },
+        "features": {
+            "privacy": {
+                "title": "Zero-Upload Policy",
+                "desc": "We process everything inside your browser's RAM. Your files never touch our servers, ensuring 100% privacy and legal compliance."
+            }
+        },
+        "recentPosts": "From the Blog",
+        "viewAllPosts": "View All"
+    },
+    "about": {
+        "title": "About Edit-All",
+        "subtitle": "We are on a mission to bring professional-grade audio editing tools to everyone, directly in the browser, with 100% privacy and zero cost.",
+        "philosophy": {
+            "title": "Our Philosophy",
+            "p1": "Edit-All was born out of a simple frustration: Why does editing a simple audio loop or merging two tracks require either a massive software installation or uploading private files to a mysterious server?",
+            "p2": "We believe that the best creative tools are the ones that are always available, lightning fast, and respect your data. By leveraging the latest in WebAssembly technology, we've moved the 'engine' into your browser, so your files never leave your computer."
+        },
+        "features": {
+            "private": "100% Private",
+            "speed": "Instant Speed",
+            "noUpload": "Zero Uploads",
+            "browser": "Browser-Based"
+        },
+        "howItWorks": "How it Works",
+        "tech": {
+            "wasm": {
+                "title": "WebAssembly Processing",
+                "desc": "We use a specialized build of FFmpeg compiled to WebAssembly. This allows your CPU to process audio data at high speeds without needing any server-side computing."
+            },
+            "memory": {
+                "title": "In-Memory Storage",
+                "desc": "When you 'upload' a file, it is read into your browser's virtual memory (RAM). It exists there only as long as the tab is open. We never see your data."
+            },
+            "free": {
+                "title": "Open & Free",
+                "desc": "The tools are free to use. We rely on community support and non-intrusive ads to keep the lights on, ensuring that everyone has access to quality audio tools."
+            }
+        },
+        "cta": {
+            "title": "Want to help us grow?",
+            "desc": "We're constantly adding new tools and improving our engine. If you have suggestions or want to report a bug, we'd love to hear from you.",
+            "button": "Contact the Team"
+        }
+    },
+    "blog": {
+        "title": "The Edit-All Blog",
+        "subtitle": "Insights, tutorials, and deep dives into the world of browser-based audio production.",
+        "readMore": "Read More",
+        "backToBlog": "Back to Blog",
+        "sharePost": "Share Post",
+        "enjoyedArticle": "Enjoyed this article?",
+        "joinThousands": "Join thousands of audio enthusiasts using Edit-All to create perfect sounds every day.",
+        "tryEditor": "Try the Audio Editor"
+    }
+}
