@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "../globals.css"; // Moved up one level
+import Script from 'next/script';
 import Navbar from "@/components/Navbar";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -32,11 +33,12 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <head>
-        <script
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4791352770846055"
           crossOrigin="anonymous"
-        ></script>
+          strategy="afterInteractive"
+        />
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>

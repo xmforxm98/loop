@@ -26,7 +26,7 @@ export default function AdBanner({
             <ins
                 className="adsbygoogle"
                 style={{ display: "block", minWidth: "300px", minHeight: "100px" }}
-                data-ad-client="ca-pub-XXXXXXXXXXXXX" // 본인의 게시자 ID로 변경
+                data-ad-client="ca-pub-4791352770846055"
                 data-ad-slot={dataAdSlot}
                 data-ad-format={dataAdFormat}
                 data-full-width-responsive={dataFullWidthResponsive.toString()}
