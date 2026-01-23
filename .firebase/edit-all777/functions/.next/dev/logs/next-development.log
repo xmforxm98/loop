@@ -1,6 +1,0 @@
-[00:00:00.473] Server  ERROR   (node:30589) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
-(Use `node --trace-warnings ...` to show where the warning was created)
-[00:00:00.474] Server  LOG     ✓ Ready in 343ms
-[00:00:36.456] Server  LOG     ✓ Compiled in 15ms
-[00:01:31.021] Server  LOG     ✓ Compiled in 22ms
-[00:01:31.140] Browser ERROR   AdSense error: {"message":"adsbygoogle.push() error: All 'ins' elements in the DOM with class=adsbygoogle already have ads in them.","name":"TagError","pbr":true}
