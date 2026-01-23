@@ -70,7 +70,7 @@ function bufferToWav(buffer: AudioBuffer): Blob {
 export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrimmerProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
-    const regionsPluginRef = useRef<any>(null);
+    const regionsPluginRef = useRef<RegionsPlugin | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const originalBufferRef = useRef<AudioBuffer | null>(null);
     const currentBlobUrlRef = useRef<string | null>(null);
@@ -170,16 +170,17 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
 
         const wavesurfer = WaveSurfer.create({
             container: containerRef.current,
-            waveColor: '#e2e8f0',
+            waveColor: '#cbd5e1',
             progressColor: '#3b82f6',
             cursorColor: '#3b82f6',
             cursorWidth: 2,
             barWidth: 2,
-            barRadius: 3,
+            barGap: 3,
+            barRadius: 4,
             height: 120,
             normalize: true,
             minPxPerSec: 50,
-            interact: true, // Allow interaction in v7
+            interact: true,
         });
 
         const regions = wavesurfer.registerPlugin(RegionsPlugin.create());
@@ -189,7 +190,7 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
             setIsDecoding(true);
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)();
                 audioContextRef.current = ctx;
                 const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
                 originalBufferRef.current = decodedBuffer;
@@ -205,7 +206,6 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
                 const url = URL.createObjectURL(wavBlob);
                 currentBlobUrlRef.current = url;
 
-                // Pre-calculate peaks array of arrays
                 const peaks = [];
                 for (let c = 0; c < decodedBuffer.numberOfChannels; c++) {
                     const chan = decodedBuffer.getChannelData(c);
@@ -234,11 +234,11 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
         });
 
         regions.enableDragSelection({
-            color: 'rgba(239, 68, 68, 0.3)',
+            color: 'rgba(59, 130, 246, 0.2)',
         });
 
         regions.on('region-created', (region) => {
-            regions.getRegions().forEach((r: any) => {
+            regions.getRegions().forEach((r) => {
                 if (r.id !== region.id) r.remove();
             });
             setSelectionRange({ start: region.start, end: region.end });
@@ -253,7 +253,17 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
 
         wavesurferRef.current = wavesurfer;
 
+        // Keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                wavesurfer.playPause();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+
         return () => {
+            window.removeEventListener('keydown', handleKeyDown);
             wavesurfer.destroy();
             if (audioContextRef.current) audioContextRef.current.close();
             if (currentBlobUrlRef.current) URL.revokeObjectURL(currentBlobUrlRef.current);
@@ -326,33 +336,86 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
         setSelectionRange(null);
     };
 
+    const handleCrop = () => {
+        if (!selectionRange || !wavesurferRef.current) return;
+
+        saveToHistory();
+
+        const cutStart = selectionRange.start;
+        const cutEnd = selectionRange.end;
+
+        const nextSegments: Segment[] = [];
+        let currentTimelineOffset = 0;
+
+        segments.forEach(seg => {
+            const segDuration = seg.end - seg.start;
+            const segTimelineStart = currentTimelineOffset;
+            const segTimelineEnd = currentTimelineOffset + segDuration;
+
+            // Map timeline cut to original segment
+            if (cutStart < segTimelineEnd && cutEnd > segTimelineStart) {
+                const overlapStart = Math.max(segTimelineStart, cutStart);
+                const overlapEnd = Math.min(segTimelineEnd, cutEnd);
+
+                const originalStart = seg.start + (overlapStart - segTimelineStart);
+                const originalEnd = seg.start + (overlapEnd - segTimelineStart);
+
+                nextSegments.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    start: originalStart,
+                    end: originalEnd
+                });
+            }
+            currentTimelineOffset += segDuration;
+        });
+
+        setSegments(nextSegments);
+        onSegmentsChange(nextSegments);
+        updateWaveform(nextSegments);
+
+        regionsPluginRef.current?.clearRegions();
+        setSelectionRange(null);
+    };
+
     return (
-        <div className="waveform-container bg-slate-50/50 rounded-[2rem] p-8 border border-slate-200">
-            <div className="flex flex-wrap items-center justify-between gap-6 mb-8">
+        <div className="waveform-container bg-slate-50/80 backdrop-blur-md rounded-[2.5rem] p-10 border border-slate-200/60 shadow-inner">
+            <div className="flex flex-wrap items-center justify-between gap-6 mb-10">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={togglePlay}
                         disabled={isDecoding || duration === 0}
-                        className="trimmer-btn btn-play-pause"
+                        className="trimmer-btn btn-play-pause w-16 h-16 shadow-lg shadow-primary/20"
                     >
-                        {isPlaying ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+                        {isPlaying ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
                     </button>
 
-                    <div className="h-10 w-[1px] bg-slate-200 mx-2" />
+                    <div className="h-12 w-[1px] bg-slate-200/80 mx-2" />
+
+                    <button
+                        onClick={handleCrop}
+                        disabled={!selectionRange || isDecoding}
+                        className="trimmer-btn px-6 py-3.5 bg-primary text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-hover hover:-translate-y-0.5 transition-all shadow-md shadow-primary/10 disabled:opacity-30"
+                    >
+                        <Scissors size={20} />
+                        Keep Selected
+                    </button>
 
                     <button
                         onClick={handleRippleCut}
                         disabled={!selectionRange || isDecoding}
-                        className="trimmer-btn btn-ripple-cut"
+                        className="trimmer-btn px-6 py-3.5 bg-danger text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-red-600 hover:-translate-y-0.5 transition-all shadow-md shadow-danger/10 disabled:opacity-30"
                     >
-                        <Scissors size={20} />
-                        Ripple Cut
+                        <Trash2 size={20} />
+                        Delete Part
                     </button>
+
+                    <div className="h-12 w-[1px] bg-slate-200/80 mx-2" />
 
                     <button
                         onClick={undo}
                         disabled={history.length === 0 || isDecoding}
-                        className="trimmer-btn btn-secondary-action"
+                        className="trimmer-btn btn-secondary-action p-3.5 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all font-bold flex items-center gap-2"
+                        title="Undo (Ctrl+Z)"
                     >
                         <Undo2 size={20} />
                         Undo
@@ -369,83 +432,90 @@ export default function WaveformTrimmer({ file, onSegmentsChange }: WaveformTrim
                             }
                         }}
                         disabled={isDecoding || (segments.length === 1 && segments[0].start === 0 && segments[0].end === originalBufferRef.current?.duration)}
-                        className="trimmer-btn btn-secondary-action btn-reset-all"
+                        className="trimmer-btn text-slate-400 hover:text-danger p-3.5 transition-all font-bold flex items-center gap-2"
                     >
                         <RotateCcw size={20} />
-                        Reset All
+                        Reset
                     </button>
                 </div>
 
-                <div className="flex flex-col items-end">
-                    <div className="text-2xl font-mono font-bold text-primary tabular-nums">
+                <div className="flex flex-col items-end bg-white/50 px-6 py-3 rounded-2xl border border-white/80 shadow-sm">
+                    <div className="text-3xl font-mono font-black text-primary tabular-nums tracking-tighter">
                         {formatTime(currentTime)}
                     </div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                        {isDecoding ? 'Processing...' : `TOTAL: ${formatTime(duration)}`}
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                        {isDecoding ? 'Updating...' : `Duration: ${formatTime(duration)}`}
                     </div>
                 </div>
             </div>
 
             <div className="relative waveform-wrapper mt-4">
                 {isDecoding && (
-                    <div className="absolute inset-0 z-20 bg-white/90 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center gap-4 shadow-inner border border-slate-100">
-                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-md rounded-[2rem] flex flex-col items-center justify-center gap-4 transition-all animate-fade-in">
+                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
                         <div className="text-center">
-                            <p className="font-black text-slate-800 text-lg uppercase tracking-tight">Updating Waveform</p>
-                            <p className="text-xs text-slate-400 font-bold">Re-rendering the rippled audio...</p>
+                            <p className="font-black text-slate-800 text-lg uppercase tracking-tight">Processing</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Applying your edits...</p>
                         </div>
                     </div>
                 )}
-                <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6">
+                <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-8">
                     <div ref={containerRef} className="waveform-viz min-h-[120px]" />
                 </div>
             </div>
 
-            <div className="mt-10 overflow-hidden bg-white border border-slate-100 rounded-3xl shadow-sm">
-                <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                    <h6 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Active Segments (to be merged)</h6>
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-md">{segments.length} Clips</span>
+            <div className="mt-8 flex flex-col md:flex-row gap-6">
+                {/* Active Segments Panel */}
+                <div className="flex-1 overflow-hidden bg-white/50 border border-slate-200/60 rounded-3xl shadow-sm">
+                    <div className="px-6 py-4 bg-slate-100/50 border-b border-slate-200/60 flex items-center justify-between">
+                        <h6 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Active Audio Segments</h6>
+                        <span className="px-3 py-1 bg-primary text-white text-[10px] font-black rounded-full uppercase tracking-widest">{segments.length} Clips</span>
+                    </div>
+                    <div className="p-5 flex flex-wrap gap-2 max-h-[160px] overflow-y-auto">
+                        {segments.map((seg, i) => (
+                            <div key={seg.id} className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-2xl border border-slate-100 text-[11px] font-mono text-slate-600 font-bold hover:shadow-md hover:border-primary/20 transition-all group">
+                                <span className="w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center text-[9px] text-slate-500 group-hover:bg-primary group-hover:text-white transition-colors">{i + 1}</span>
+                                {formatTime(seg.start)} - {formatTime(seg.end)}
+                            </div>
+                        ))}
+                        {segments.length === 0 && (
+                            <div className="w-full py-8 text-center">
+                                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">No audio content remaining</p>
+                                <p className="text-[10px] text-slate-300">Try undoing your last action or reset.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div className="p-4 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto">
-                    {segments.map((seg, i) => (
-                        <div key={seg.id} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[11px] font-mono text-slate-600 font-bold hover:bg-white transition-colors group">
-                            <span className="w-4 h-4 rounded bg-slate-200 flex items-center justify-center text-[9px] text-slate-500">{i + 1}</span>
-                            {formatTime(seg.start)} - {formatTime(seg.end)}
-                        </div>
-                    ))}
-                    {segments.length === 0 && <p className="text-sm text-slate-400 italic px-2">No audio content remaining.</p>}
-                </div>
-            </div>
 
-            <div className="mt-8 p-6 bg-slate-900 rounded-4xl text-white shadow-xl">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                        <Scissors size={20} />
-                    </div>
-                    <div>
-                        <p className="font-bold text-lg leading-tight">Smart Ripple-Waveform</p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Version 2.5 Pro</p>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-400">
-                    <div className="space-y-3">
+                {/* Instructions Panel */}
+                <div className="md:w-72 bg-slate-900 rounded-3xl p-6 text-white shadow-2xl flex flex-col justify-center">
+                    <h6 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Quick Guide</h6>
+                    <ul className="space-y-4">
                         <li className="flex gap-3">
-                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">1</span>
-                            <span><strong className="text-white">Select Part to Remove</strong>: Drag on the waveform. The red area is what will be DELETED.</span>
+                            <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-black text-[10px]">1</div>
+                            <p className="text-[11px] text-slate-300 leading-relaxed font-bold">
+                                <span className="text-white">Drag</span> on waveform to select a part.
+                            </p>
                         </li>
                         <li className="flex gap-3">
-                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">2</span>
-                            <span><strong className="text-white">Instant Ripple</strong>: Click Cut. The waveform will physically SHRINK, joining the edges.</span>
+                            <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-black text-[10px]">2</div>
+                            <p className="text-[11px] text-slate-300 leading-relaxed font-bold">
+                                Use <span className="text-primary">Keep selected</span> to trim everything else.
+                            </p>
                         </li>
-                    </div>
-                    <div className="space-y-3">
                         <li className="flex gap-3">
-                            <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold">3</span>
-                            <span><strong className="text-white">Precision Control</strong>: Use Undo to fix any mistake. Clicking the waveform moves the needle without playing.</span>
+                            <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0 font-black text-[10px]">3</div>
+                            <p className="text-[11px] text-slate-300 leading-relaxed font-bold">
+                                Use <span className="text-danger">Delete Part</span> to remove specific noise.
+                            </p>
                         </li>
-                    </div>
+                    </ul>
                 </div>
             </div>
         </div>
     );
 }
+
+// Add these imports at the top
+import { Trash2, Loader2 } from 'lucide-react';
+

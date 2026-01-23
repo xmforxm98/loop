@@ -16,7 +16,9 @@ import {
   MessageSquare,
   Send,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Scissors,
+  RotateCcw
 } from "lucide-react";
 import { fetchFile } from "@ffmpeg/util";
 import { useFFmpeg } from "@/hooks/useFFmpeg";
@@ -51,6 +53,7 @@ export default function AudioEditor() {
   const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -60,6 +63,11 @@ export default function AudioEditor() {
       } else {
         setFiles(newFiles);
       }
+
+      // Auto-scroll to settings after upload
+      setTimeout(() => {
+        editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -79,17 +87,17 @@ export default function AudioEditor() {
   };
 
   const handleProcess = async () => {
+    if (files.length === 0) {
+      setError("Please select at least one file.");
+      return;
+    }
+
     if (!loaded) {
       const success = await load();
       if (success === false) {
         setError("Could not load the processing engine. Please check your internet connection and try again.");
         return;
       }
-    }
-
-    if (files.length === 0) {
-      setError("Please select at least one file.");
-      return;
     }
 
     setIsProcessing(true);
@@ -106,9 +114,14 @@ export default function AudioEditor() {
       } else if (activeTool === "trim") {
         await processTrim();
       }
-    } catch (err: any) {
+
+      // Scroll to result area
+      setTimeout(() => {
+        editorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+    } catch (err) {
       console.error(err);
-      setError("An error occurred during processing. Please try again.");
+      setError(err instanceof Error ? err.message : "An error occurred during processing. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -124,10 +137,10 @@ export default function AudioEditor() {
     }
 
     let command: string[] = [];
-    const outputName = "merged_output.mp3";
+    const outputName = `merged_${Date.now()}.mp3`;
 
     if (crossfade > 0 && files.length > 1) {
-      let inputs = fileNames.flatMap((name) => ["-i", name]);
+      const inputs = fileNames.flatMap((name) => ["-i", name]);
       let filter = "[0:a][1:a]acrossfade=d=" + crossfade + ":c1=tri:c2=tri[a0]";
       for (let i = 2; i < files.length; i++) {
         filter += `;[a${i - 2}][${i}:a]acrossfade=d=${crossfade}:c1=tri:c2=tri[a${i - 1}]`;
@@ -140,32 +153,36 @@ export default function AudioEditor() {
       command = ["-f", "concat", "-safe", "0", "-i", "concat.txt", "-c", "copy", outputName];
     }
 
-    await ffmpeg.exec(command);
+    const res = await ffmpeg.exec(command);
+    if (res !== 0) throw new Error("FFmpeg execution failed");
+
     const data = await ffmpeg.readFile(outputName);
-    const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
+    const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
     setResultUrl(url);
   };
 
   const processLoop = async () => {
     const ext = files[0].name.split(".").pop();
     const inputName = `input.${ext}`;
-    const outputName = "looped_output.mp3";
+    const outputName = `looped_${Date.now()}.mp3`;
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
-    await ffmpeg.exec(["-stream_loop", (loopCount - 1).toString(), "-i", inputName, "-c", "copy", outputName]);
+    const res = await ffmpeg.exec(["-stream_loop", (loopCount - 1).toString(), "-i", inputName, "-c", "copy", outputName]);
+    if (res !== 0) throw new Error("FFmpeg execution failed");
     const data = await ffmpeg.readFile(outputName);
-    const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
+    const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
     setResultUrl(url);
   };
 
   const processExtend = async () => {
     const ext = files[0].name.split(".").pop();
     const inputName = `input.${ext}`;
-    const outputName = "extended_output.mp3";
+    const outputName = `extended_${Date.now()}.mp3`;
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
     const targetSeconds = targetDuration * 60;
-    await ffmpeg.exec(["-stream_loop", "-1", "-i", inputName, "-t", targetSeconds.toString(), "-c", "copy", outputName]);
+    const res = await ffmpeg.exec(["-stream_loop", "-1", "-i", inputName, "-t", targetSeconds.toString(), "-c", "copy", outputName]);
+    if (res !== 0) throw new Error("FFmpeg execution failed");
     const data = await ffmpeg.readFile(outputName);
-    const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
+    const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
     setResultUrl(url);
   };
 
@@ -176,7 +193,7 @@ export default function AudioEditor() {
     }
     const ext = files[0].name.split(".").pop();
     const inputName = `input.${ext}`;
-    const outputName = "trimmed_output.mp3";
+    const outputName = `trimmed_${Date.now()}.mp3`;
     await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
     let filter = "";
     let inputs = "";
@@ -185,7 +202,7 @@ export default function AudioEditor() {
       inputs += `[a${i}]`;
     });
     filter += `${inputs}concat=n=${segments.length}:v=0:a=1[out]`;
-    await ffmpeg.exec([
+    const res = await ffmpeg.exec([
       "-i", inputName,
       "-filter_complex", filter,
       "-map", "[out]",
@@ -193,8 +210,9 @@ export default function AudioEditor() {
       "-q:a", "2",
       outputName
     ]);
+    if (res !== 0) throw new Error("FFmpeg execution failed");
     const data = await ffmpeg.readFile(outputName);
-    const url = URL.createObjectURL(new Blob([data as any], { type: "audio/mp3" }));
+    const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
     setResultUrl(url);
   };
 
@@ -202,7 +220,8 @@ export default function AudioEditor() {
     if (resultUrl) {
       const a = document.createElement("a");
       a.href = resultUrl;
-      a.download = `loop_edited_${Date.now()}.mp3`;
+      const toolSuffix = activeTool.charAt(0).toUpperCase() + activeTool.slice(1);
+      a.download = `loop_${toolSuffix}_${Date.now()}.mp3`;
       a.click();
     }
   };
@@ -210,50 +229,56 @@ export default function AudioEditor() {
   return (
     <div className="container py-12">
       {/* Hero Section */}
-      <section className="text-center mb-16 animate-fade-in">
-        <h1 className="text-5xl md:text-6xl font-extrabold mb-6 outfit">
-          Edit Audio <span className="gradient-text">Without Limits</span>
+      <section className="text-center mb-16 animate-fade-in px-6">
+        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 outfit tracking-tight leading-tight">
+          Edit Audio <span className="gradient-text">Like a Pro</span>
         </h1>
-        <p className="text-xl text-secondary max-w-2xl mx-auto mb-10">
-          {t('hero.subtitle')}
+        <p className="text-xl text-secondary max-w-2xl mx-auto mb-12 font-medium opacity-90">
+          Professional browser-based tools to merge, loop, and trim your audio with ease.
         </p>
 
         {/* Tool Cards */}
         <div className="tool-grid">
-          <div
+          <motion.div
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.98 }}
             className={`tool-card ${activeTool === "merge" ? "active" : ""}`}
-            onClick={() => { setActiveTool("merge"); setFiles([]); setError(null); }}
+            onClick={() => { setActiveTool("merge"); setFiles([]); setError(null); setResultUrl(null); }}
           >
-            <div className="icon-box"><Layers size={24} /></div>
+            <div className="icon-box"><Layers size={28} /></div>
             <h3 className="text-xl font-bold mb-2">{t('tools.merge.title')}</h3>
-            <p className="text-sm opacity-80">{t('tools.merge.desc')}</p>
-          </div>
-          <div
+            <p className="text-sm opacity-70 font-medium">{t('tools.merge.desc')}</p>
+          </motion.div>
+          <motion.div
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.98 }}
             className={`tool-card ${activeTool === "loop" ? "active" : ""}`}
-            onClick={() => { setActiveTool("loop"); setFiles([]); setError(null); }}
+            onClick={() => { setActiveTool("loop"); setFiles([]); setError(null); setResultUrl(null); }}
           >
-            <div className="icon-box"><Repeat size={24} /></div>
+            <div className="icon-box"><Repeat size={28} /></div>
             <h3 className="text-xl font-bold mb-2">{t('tools.loop.title')}</h3>
-            <p className="text-sm opacity-80">{t('tools.loop.desc')}</p>
-          </div>
-          <div
+            <p className="text-sm opacity-70 font-medium">{t('tools.loop.desc')}</p>
+          </motion.div>
+          <motion.div
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.98 }}
             className={`tool-card ${activeTool === "extend" ? "active" : ""}`}
-            onClick={() => { setActiveTool("extend"); setFiles([]); setError(null); }}
+            onClick={() => { setActiveTool("extend"); setFiles([]); setError(null); setResultUrl(null); }}
           >
-            <div className="icon-box"><Clock size={24} /></div>
+            <div className="icon-box"><Clock size={28} /></div>
             <h3 className="text-xl font-bold mb-2">{t('tools.extend.title')}</h3>
-            <p className="text-sm opacity-80">{t('tools.extend.desc')}</p>
-          </div>
-          <div
+            <p className="text-sm opacity-70 font-medium">{t('tools.extend.desc')}</p>
+          </motion.div>
+          <motion.div
+            whileHover={{ y: -5 }}
+            whileTap={{ scale: 0.98 }}
             className={`tool-card ${activeTool === "trim" ? "active" : ""}`}
-            onClick={() => { setActiveTool("trim"); setFiles([]); setError(null); }}
+            onClick={() => { setActiveTool("trim"); setFiles([]); setError(null); setResultUrl(null); }}
           >
-            <div className="icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 6 2 2 2-2M3 18l2-2 2 2M12 6l2 2 2-2M12 18l2-2 2 2M18 12c.3 0 .5.2.5.5s-.2.5-.5.5h-4c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h4ZM8 12c.3 0 .5.2.5.5s-.2.5-.5.5H4c-.3 0-.5-.2-.5-.5s.2-.5.5-.5h4Z" /><path d="M12 2v20M18 2v20" /></svg>
-            </div>
+            <div className="icon-box"><Scissors size={28} /></div>
             <h3 className="text-xl font-bold mb-2">{t('tools.trim.title')}</h3>
-            <p className="text-sm opacity-80">{t('tools.trim.desc')}</p>
-          </div>
+            <p className="text-sm opacity-70 font-medium">{t('tools.trim.desc')}</p>
+          </motion.div>
         </div>
       </section>
 
@@ -261,303 +286,333 @@ export default function AudioEditor() {
       <AdBanner dataAdSlot="XXXXXXXXXX" />
 
       {/* Main Action Area */}
-      <section className="max-w-3xl mx-auto glass rounded-[2rem] p-12 shadow-xl animate-fade-in" style={{ animationDelay: "0.2s" }} id="editor">
-        {/* Drop Zone */}
-        {!isProcessing && !resultUrl && (
-          <div
-            className="drop-zone mb-8"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
-            onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('active'); }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.currentTarget.classList.remove('active');
-              if (e.dataTransfer.files) {
-                const newFiles = Array.from(e.dataTransfer.files);
-                if (activeTool === "merge") {
-                  setFiles((prev) => [...prev, ...newFiles]);
-                } else {
-                  setFiles(newFiles);
-                }
-              }
-            }}
-          >
-            <Upload className="mx-auto mb-4 text-primary" size={48} />
-            <h4 className="text-xl font-bold mb-2">
-              {files.length > 0 ? `${files.length} file(s) selected` : "Drop your audio files here"}
-            </h4>
-            <p className="text-secondary">Or click to browse from your computer</p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="audio/*"
-              multiple={activeTool === "merge"}
-              onChange={handleFileChange}
-            />
-          </div>
-        )}
-
-        {/* File List */}
-        {files.length > 0 && !isProcessing && !resultUrl && (
-          <div className="mb-12">
-            <div className="flex justify-between items-center mb-4">
-              <h5 className="font-bold">Selected Tracks</h5>
-              <button
-                className="clear-btn"
-                onClick={() => setFiles([])}
-              >
-                Clear All
-              </button>
-            </div>
-
-            <div className="max-h-80 overflow-y-auto pr-2">
-              <AnimatePresence mode="popLayout">
-                {files.map((file, idx) => (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    key={`${file.name}-${idx}`}
-                    className="file-item"
-                  >
-                    <Music size={20} className="text-primary shrink-0" />
-                    <div className="file-info">
-                      <span className="file-name truncate">{file.name}</span>
-                      <span className="file-meta">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-
-                    <div className="file-actions">
-                      {activeTool === "merge" && (
-                        <>
-                          <button
-                            className="action-btn"
-                            disabled={idx === 0}
-                            onClick={() => moveFile(idx, 'up')}
-                            title="Move Up"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
-                          </button>
-                          <button
-                            className="action-btn"
-                            disabled={idx === files.length - 1}
-                            onClick={() => moveFile(idx, 'down')}
-                            title="Move Down"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                          </button>
-                        </>
-                      )}
-                      <button
-                        className="action-btn delete"
-                        onClick={() => removeFile(idx)}
-                        title="Remove"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {activeTool === "merge" && (
-              <button
-                className="add-files-btn mt-4"
+      <section ref={editorRef} className="max-w-4xl mx-auto transition-all duration-500 scroll-mt-20" id="editor">
+        <div className={`glass rounded-[3rem] p-1 shadow-2xl overflow-hidden ${isProcessing ? 'border-primary/30' : 'border-white/20'}`}>
+          <div className="p-8 md:p-14">
+            {/* Step 1: Upload */}
+            {!isProcessing && !resultUrl && files.length === 0 && (
+              <div
+                className="drop-zone py-20 border-3 border-dashed border-slate-200/60 rounded-[2.5rem] bg-slate-50/30 hover:bg-slate-50/80 hover:border-primary/40 transition-all cursor-pointer group"
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
+                onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('active'); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('active');
+                  if (e.dataTransfer.files) {
+                    const newFiles = Array.from(e.dataTransfer.files);
+                    if (activeTool === "merge") {
+                      setFiles((prev) => [...prev, ...newFiles]);
+                    } else {
+                      setFiles(newFiles);
+                    }
+                  }
+                }}
               >
-                <div className="flex items-center gap-2">
-                  <Upload size={18} /> <span>Add More Files</span>
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <Upload className="text-primary" size={40} />
                 </div>
-              </button>
+                <h4 className="text-2xl font-black mb-3 outfit">
+                  Drop your audio files here
+                </h4>
+                <p className="text-secondary font-medium">Or click to browse from your computer</p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="audio/*"
+                  multiple={activeTool === "merge"}
+                  onChange={handleFileChange}
+                />
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Settings */}
-        {files.length > 0 && !isProcessing && !resultUrl && (
-          <div className="settings-panel mb-12">
-            <h5 className="font-bold mb-6 flex items-center gap-2">
-              Settings
-            </h5>
+            {/* Step 2: Settings & Preview */}
+            {files.length > 0 && !isProcessing && !resultUrl && (
+              <div className="animate-fade-in text-left">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h5 className="text-sm font-black uppercase tracking-[0.2em] text-primary mb-1">Step 2: Preview & Configure</h5>
+                    <h4 className="text-3xl font-black outfit text-slate-800">Fine-tune your track</h4>
+                  </div>
+                  <button
+                    className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-danger px-4 py-2 bg-danger/5 rounded-full hover:bg-danger/10 transition-colors"
+                    onClick={() => { setFiles([]); setResultUrl(null); }}
+                  >
+                    <Trash2 size={14} /> Clear All
+                  </button>
+                </div>
 
-            {activeTool === "merge" && (
-              <div className="input-group">
-                <label>Crossfade Duration (seconds)</label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={crossfade}
-                    onChange={(e) => setCrossfade(parseFloat(e.target.value))}
-                    className="flex-1"
+                {/* File List for Merge */}
+                {activeTool === "merge" && (
+                  <div className="mb-10 space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {files.map((file, idx) => (
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          key={`${file.name}-${idx}`}
+                          className="file-item p-4 bg-white/60 border border-slate-100 rounded-2xl flex items-center gap-4 hover:shadow-lg transition-all"
+                        >
+                          <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0"><Music size={20} /></div>
+                          <div className="file-info min-w-0">
+                            <span className="file-name font-bold text-slate-800 truncate block">{file.name}</span>
+                            <span className="text-[10px] font-black text-slate-400 uppercase">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 disabled:opacity-20" onClick={() => moveFile(idx, 'up')} disabled={idx === 0}><ArrowRight size={16} className="-rotate-90" /></button>
+                            <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 disabled:opacity-20" onClick={() => moveFile(idx, 'down')} disabled={idx === files.length - 1}><ArrowRight size={16} className="rotate-90" /></button>
+                            <button className="p-2 hover:bg-red-50 text-danger/50 hover:text-danger rounded-lg transition-colors" onClick={() => removeFile(idx)}><Trash2 size={16} /></button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    <button className="w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2" onClick={() => fileInputRef.current?.click()}>
+                      <Upload size={16} /> Add More Files
+                    </button>
+                  </div>
+                )}
+
+                <div className="bg-slate-50/50 rounded-3xl border border-white/40 overflow-hidden mb-12 shadow-inner">
+                  <div className="p-6 md:p-10">
+                    {activeTool === "merge" && (
+                      <div className="input-group mb-0">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block text-left">Crossfade Duration</label>
+                        <div className="flex items-center gap-6">
+                          <input
+                            type="range"
+                            min="0"
+                            max="5"
+                            step="0.1"
+                            value={crossfade}
+                            onChange={(e) => setCrossfade(parseFloat(e.target.value))}
+                            className="flex-1 accent-primary"
+                          />
+                          <span className="text-2xl font-black outfit text-primary w-16 text-right">{crossfade}s</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTool === "loop" && (
+                      <div className="input-group mb-0">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block text-left">Number of Loops</label>
+                        <div className="flex items-center gap-4">
+                          <Repeat size={20} className="text-slate-400" />
+                          <input
+                            type="number"
+                            min="2"
+                            max="100"
+                            value={loopCount}
+                            onChange={(e) => setLoopCount(parseInt(e.target.value))}
+                            className="w-full p-4 bg-white rounded-2xl border-none shadow-inner text-xl font-black outfit focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTool === "extend" && (
+                      <div className="input-group mb-0">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4 block text-left">Target Duration (Minutes)</label>
+                        <div className="flex items-center gap-4">
+                          <Clock size={20} className="text-slate-400" />
+                          <input
+                            type="number"
+                            min="1"
+                            max="480"
+                            value={targetDuration}
+                            onChange={(e) => setTargetDuration(parseInt(e.target.value))}
+                            className="w-full p-4 bg-white rounded-2xl border-none shadow-inner text-xl font-black outfit focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTool === "trim" && (
+                      <div className="p-1">
+                        <WaveformTrimmer
+                          file={files[0]}
+                          onSegmentsChange={setSegments}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Main Process Button */}
+                <div className="sticky bottom-0 pb-6 pt-2 bg-gradient-to-t from-white via-white/90 to-transparent z-10">
+                  <button
+                    className="btn btn-primary w-full py-6 text-xl font-black outfit shadow-[0_20px_40px_-10px_rgba(59,130,246,0.3)] hover:shadow-[0_25px_50px_-10px_rgba(59,130,246,0.4)] transition-all flex items-center justify-center gap-4 group"
+                    onClick={handleProcess}
+                    disabled={ffmpegLoading}
+                  >
+                    {ffmpegLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={24} /> Loading Engine...
+                      </>
+                    ) : (
+                      <>
+                        <span className="uppercase tracking-widest text-sm opacity-60 mr-2">Ready?</span>
+                        {activeTool === "merge" ? "Join All Tracks" :
+                          activeTool === "loop" ? "Loop This Audio" :
+                            activeTool === "extend" ? `Extend to ${targetDuration}m` :
+                              "Save Your Edits"}
+                        <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-6">
+                    Processed instantly in your device for maximum privacy
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Processing */}
+            {isProcessing && (
+              <div className="text-center py-20 animate-fade-in">
+                <div className="relative w-32 h-32 mx-auto mb-10">
+                  <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+                  <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Music className="text-primary animate-pulse" size={40} />
+                  </div>
+                </div>
+                <h4 className="text-4xl font-black mb-3 outfit tracking-tight">Processing Audio...</h4>
+                <p className="text-secondary font-medium mb-12">This may take a moment. Please stay on this page.</p>
+
+                <div className="progress-container h-3 bg-slate-100 max-w-md mx-auto rounded-full overflow-hidden shadow-inner">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    className="h-full bg-primary"
                   />
-                  <span className="font-bold w-12 text-right">{crossfade}s</span>
+                </div>
+                <p className="font-black text-primary mt-4 outfit text-xl">{progress}%</p>
+              </div>
+            )}
+
+            {/* Step 4: Result */}
+            {resultUrl && !isProcessing && (
+              <div className="text-center py-10 animate-fade-in">
+                <div className="w-24 h-24 bg-success/10 text-success rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-success/10">
+                  <CheckCircle2 size={48} />
+                </div>
+                <h4 className="text-5xl font-black mb-4 outfit">Studio Quality Ready</h4>
+                <p className="text-secondary font-medium mb-12 text-lg">Your audio file has been processed successfully.</p>
+
+                <div className="flex flex-col md:flex-row gap-6 justify-center">
+                  <button className="btn btn-primary px-12 py-5 text-xl font-black outfit shadow-xl shadow-primary/20 flex items-center justify-center gap-3" onClick={downloadResult}>
+                    <Download size={24} /> Download File
+                  </button>
+                  <button
+                    className="btn glass border-slate-200 bg-white hover:bg-slate-50 px-12 py-5 text-xl font-black outfit text-slate-700 flex items-center justify-center gap-3"
+                    onClick={() => { setResultUrl(null); setFiles([]); }}
+                  >
+                    <RotateCcw size={24} /> Edit Another
+                  </button>
                 </div>
               </div>
             )}
 
-            {activeTool === "loop" && (
-              <div className="input-group">
-                <label>Number of Loops</label>
-                <input
-                  type="number"
-                  min="2"
-                  max="100"
-                  value={loopCount}
-                  onChange={(e) => setLoopCount(parseInt(e.target.value))}
-                />
-              </div>
-            )}
-
-            {activeTool === "extend" && (
-              <div className="input-group">
-                <label>Target Duration (minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="480"
-                  value={targetDuration}
-                  onChange={(e) => setTargetDuration(parseInt(e.target.value))}
-                />
-              </div>
-            )}
-
-            {activeTool === "trim" && files.length > 0 && (
-              <div className="mt-4">
-                <WaveformTrimmer
-                  file={files[0]}
-                  onSegmentsChange={(newSegments) => {
-                    setSegments(newSegments);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Progress State */}
-        {isProcessing && (
-          <div className="text-center py-12">
-            <Loader2 className="mx-auto mb-4 text-primary animate-spin" size={48} />
-            <h4 className="text-2xl font-bold mb-2">Processing Audio...</h4>
-            <p className="text-secondary mb-6">This may take a few minutes for large files.</p>
-
-            <div className="progress-container">
-              <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-            </div>
-            <p className="font-bold text-primary">{progress}% Complete</p>
-          </div>
-        )}
-
-        {/* Result State */}
-        {resultUrl && (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-6">
-              <Download size={40} />
-            </div>
-            <h4 className="text-3xl font-bold mb-2">Ready for Download!</h4>
-            <p className="text-secondary mb-8">Your audio file has been processed successfully.</p>
-
-            <div className="flex flex-col md:flex-row gap-4 justify-center">
-              <button className="btn btn-primary px-10" onClick={downloadResult}>
-                <Download size={20} /> Download File
-              </button>
-              <button
-                className="btn glass border-none px-10"
-                onClick={() => { setResultUrl(null); setFiles([]); }}
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 text-danger p-6 rounded-3xl border border-danger/10 flex items-start gap-4 mt-8"
               >
-                Reset & Edit More
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-danger/10 text-danger p-4 rounded-xl flex items-start gap-3 mb-6">
-            <AlertCircle className="shrink-0" size={20} />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        {/* Action Button */}
-        {files.length > 0 && !isProcessing && !resultUrl && (
-          <button
-            className="btn btn-primary w-full py-4 text-lg"
-            onClick={handleProcess}
-            disabled={ffmpegLoading}
-          >
-            {ffmpegLoading ? "Loading Engine..." : `Process & ${activeTool === "merge" ? "Merge" :
-              activeTool === "loop" ? "Loop" :
-                activeTool === "extend" ? "Extend" :
-                  "Trim"
-              }`}
-            {!ffmpegLoading && <ArrowRight size={20} />}
-          </button>
-        )}
-      </section>
-
-      {/* Privacy Message */}
-      <section className="mt-16 max-w-2xl mx-auto">
-        <div className="glass p-6 rounded-2xl border border-primary/20 flex gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
-            <AlertCircle size={24} />
-          </div>
-          <div>
-            <h5 className="font-bold mb-1">{t('features.privacy.title')}</h5>
-            <p className="text-sm text-secondary">
-              {t('features.privacy.desc')}
-            </p>
+                <AlertCircle className="shrink-0 mt-1" size={20} />
+                <div className="text-left">
+                  <p className="font-black outfit text-lg uppercase tracking-tight text-left">Processing Error</p>
+                  <p className="text-sm font-medium opacity-80 text-left">{error}</p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Recent Blog Posts Preview */}
-      <section className="mt-32 max-w-5xl mx-auto">
-        <div className="flex justify-between items-end mb-10">
-          <div>
-            <h2 className="text-3xl font-bold outfit mb-2">{t('recentPosts')}</h2>
-            <p className="text-secondary">Audio production tips and updates</p>
+      {/* Trust & Privacy */}
+      <section className="mt-20 max-w-4xl mx-auto px-6">
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="glass p-8 rounded-[2.5rem] border-white/20 flex gap-6 items-start">
+            <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-inner">
+              <AlertCircle size={28} />
+            </div>
+            <div className="text-left">
+              <h5 className="font-black outfit text-xl mb-2">{t('features.privacy.title')}</h5>
+              <p className="text-sm text-secondary font-medium leading-relaxed">
+                {t('features.privacy.desc')}
+              </p>
+            </div>
           </div>
-          <Link href="/blog" className="text-primary font-bold hover:underline flex items-center gap-2">
-            {t('viewAllPosts')} <ArrowRight size={16} />
+          <div className="glass p-8 rounded-[2.5rem] border-white/20 flex gap-6 items-start">
+            <div className="w-14 h-14 bg-green-100/50 rounded-2xl flex items-center justify-center text-green-600 shrink-0 shadow-inner">
+              <CheckCircle2 size={28} />
+            </div>
+            <div className="text-left">
+              <h5 className="font-black outfit text-xl mb-2">High Fidelity</h5>
+              <p className="text-sm text-secondary font-medium leading-relaxed">
+                We use FFmpeg technology to ensure your audio quality remains pristine after processing.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Preview */}
+      <section className="mt-40 max-w-6xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
+          <div className="text-left">
+            <h6 className="text-primary font-black uppercase tracking-[0.2em] text-xs mb-3">Resources</h6>
+            <h2 className="text-4xl md:text-5xl font-black outfit">{t('recentPosts')}</h2>
+          </div>
+          <Link href="/blog" className="px-8 py-3 bg-white border border-slate-200 rounded-full text-slate-600 font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center gap-2 group shadow-sm">
+            {t('viewAllPosts')} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {blogPosts.slice(0, 3).map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="glass p-5 rounded-[2rem] border-transparent hover:border-primary/20 transition-all group"
+              className="glass p-2 rounded-[2.5rem] border-white/10 hover:border-primary/20 transition-all group block shadow-md hover:shadow-2xl"
             >
-              <img
-                src={post.image}
-                className="w-full h-32 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform"
-                alt={post.title}
-              />
-              <h4 className="font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2">{post.title}</h4>
-              <p className="text-xs text-secondary line-clamp-3">{post.excerpt}</p>
+              <div className="relative overflow-hidden rounded-[2rem]">
+                <img
+                  src={post.image}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                  alt={post.title}
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="px-4 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">Article</span>
+                </div>
+              </div>
+              <div className="p-6 text-left">
+                <h4 className="text-xl font-black mb-3 outfit group-hover:text-primary transition-colors line-clamp-2 leading-tight">{post.title}</h4>
+                <p className="text-xs text-secondary font-medium line-clamp-2 leading-relaxed opacity-80">{post.excerpt}</p>
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Feedback Button */}
-      <section className="mt-12 text-center">
-        <button
-          onClick={() => setIsFeedbackOpen(true)}
-          className="btn glass border-2 border-primary/20 hover:border-primary hover:bg-primary/5 px-8 py-3 transition-all flex items-center gap-2 mx-auto"
-        >
-          <MessageSquare size={18} />
-          Submit Feedback / Suggestion
-        </button>
-        <p className="text-[10px] text-secondary mt-3 font-bold uppercase tracking-widest">
-          We value your feedback to make Loop better
+      {/* Feedback Trigger */}
+      <section className="mt-32 text-center pb-20">
+        <div className="inline-block p-1 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-[2.2rem]">
+          <button
+            onClick={() => setIsFeedbackOpen(true)}
+            className="px-12 py-5 bg-white border border-white/50 rounded-[2rem] hover:bg-slate-50 transition-all flex items-center gap-4 text-xl font-black outfit text-slate-800 shadow-xl"
+          >
+            <MessageSquare size={24} className="text-primary" />
+            Submit Feedback
+          </button>
+        </div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-8">
+          Help us build the world&apos;s best audio suite
         </p>
       </section>
 
@@ -569,62 +624,30 @@ export default function AudioEditor() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                if (!feedbackSent) setIsFeedbackOpen(false);
-              }}
-              style={{ position: 'absolute', inset: 0 }}
+              onClick={() => { if (!feedbackSent) setIsFeedbackOpen(false); }}
+              className="absolute inset-0 cursor-pointer"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="modal-container"
+              className="modal-container max-w-lg"
             >
-              <div className="modal-content">
-                {!feedbackSent && (
-                  <div className="modal-header">
-                    <div>
-                      <h3 className="text-2xl font-bold outfit mb-1">Feedback</h3>
-                      <p className="text-sm text-secondary">Share your thoughts or report an issue.</p>
+              <div className="modal-content overflow-hidden p-0 rounded-[3rem]">
+                {!feedbackSent ? (
+                  <div className="p-10 md:p-14 text-left">
+                    <div className="flex items-center justify-between mb-10">
+                      <div>
+                        <h6 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2">Connect with us</h6>
+                        <h3 className="text-4xl font-black outfit tracking-tight text-slate-800">Your Thoughts?</h3>
+                      </div>
+                      <button onClick={() => setIsFeedbackOpen(false)} className="p-3 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><X size={24} /></button>
                     </div>
-                    <button
-                      onClick={() => setIsFeedbackOpen(false)}
-                      className="close-btn"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                )}
-
-                {feedbackSent ? (
-                  <div className="text-center animate-fade-in py-4">
-                    <div className="w-20 h-20 bg-success/10 text-success rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle2 size={40} />
-                    </div>
-                    <h4 className="text-3xl font-bold mb-3 outfit">Feedback Received</h4>
-                    <p className="text-secondary mb-8 leading-relaxed">
-                      Thank you for your valuable feedback!<br />
-                      We will review it and continue to improve Loop.
-                    </p>
-                    <button
-                      className="btn btn-primary w-full py-4 rounded-2xl shadow-lg"
-                      onClick={() => {
-                        setIsFeedbackOpen(false);
-                        setFeedbackSent(false);
-                        setFeedbackBody("");
-                      }}
-                    >
-                      Close
-                    </button>
-                  </div>
-                ) : (
-                  <>
                     <textarea
                       value={feedbackBody}
                       onChange={(e) => setFeedbackBody(e.target.value)}
-                      placeholder="Write your suggestion or feedback here..."
-                      className="feedback-textarea"
-                      style={{ minHeight: '180px' }}
+                      placeholder="Share your suggestion or report a bug..."
+                      className="feedback-textarea p-6 rounded-3xl bg-slate-50 border-slate-100 min-h-[220px] focus:ring-4 focus:ring-primary/10 transition-all font-medium mb-8 w-full block"
                     />
                     <button
                       disabled={!feedbackBody.trim() || feedbackLoading}
@@ -636,32 +659,25 @@ export default function AudioEditor() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ body: feedbackBody }),
                           });
-
-                          if (response.ok) {
-                            setFeedbackSent(true);
-                          } else {
-                            alert("Failed to send feedback. Please try again later.");
-                          }
-                        } catch (err) {
-                          console.error(err);
-                          alert("An error occurred. Please try again.");
+                          if (response.ok) setFeedbackSent(true);
                         } finally {
                           setFeedbackLoading(false);
                         }
                       }}
-                      className="btn btn-primary w-full py-4 text-lg font-bold rounded-2xl shadow-lg disabled:opacity-50"
+                      className="btn btn-primary w-full py-5 text-xl font-black outfit rounded-[1.8rem] shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50"
                     >
-                      {feedbackLoading ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 size={20} className="animate-spin" /> Submitting...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <Send size={18} /> Submit Feedback
-                        </span>
-                      )}
+                      {feedbackLoading ? <Loader2 size={24} className="animate-spin" /> : <><Send size={20} /> Send Feedback</>}
                     </button>
-                  </>
+                  </div>
+                ) : (
+                  <div className="p-10 md:p-14 text-center py-6 animate-fade-in">
+                    <div className="w-24 h-24 bg-success/10 text-success rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-success/10">
+                      <CheckCircle2 size={48} />
+                    </div>
+                    <h4 className="text-4xl font-black mb-4 outfit text-slate-800">Message Sent</h4>
+                    <p className="text-secondary font-medium mb-12 leading-relaxed text-lg">Thank you for helping us improve!</p>
+                    <button className="btn btn-primary w-full py-5 rounded-[1.8rem] font-black outfit text-xl" onClick={() => { setIsFeedbackOpen(false); setFeedbackSent(false); setFeedbackBody(""); }}>Close</button>
+                  </div>
                 )}
               </div>
             </motion.div>
