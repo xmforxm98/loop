@@ -36,7 +36,8 @@ export default function Navbar({ locale }: NavbarProps) {
 
     const navLinks = [
         { name: t('about'), href: "/about" },
-        { name: t('blog'), href: "/blog" },
+        { name: t('sounds'), href: "/sounds" },
+        { name: t('gallery'), href: "/gallery" },
     ];
 
     return (

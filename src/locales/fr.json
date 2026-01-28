@@ -1,7 +1,8 @@
 {
     "nav": {
         "about": "À propos",
-        "blog": "Blog",
+        "sounds": "Sons",
+        "gallery": "Galerie",
         "tryEditor": "Essayer l'éditeur"
     },
     "home": {
@@ -72,13 +73,35 @@
         }
     },
     "blog": {
-        "title": "The Edit-All Blog",
-        "subtitle": "Insights, tutorials, and deep dives into the world of browser-based audio production.",
-        "readMore": "Read More",
-        "backToBlog": "Back to Blog",
-        "sharePost": "Share Post",
-        "enjoyedArticle": "Enjoyed this article?",
-        "joinThousands": "Join thousands of audio enthusiasts using Edit-All to create perfect sounds every day.",
-        "tryEditor": "Try the Audio Editor"
+        "title": "Le Blog Edit-All",
+        "subtitle": "Aperçus, tutoriels et explorations approfondies dans le monde de la production audio par navigateur.",
+        "readMore": "Lire la suite",
+        "backToBlog": "Retour au blog",
+        "sharePost": "Partager l'article",
+        "enjoyedArticle": "Vous avez aimé cet article ?",
+        "joinThousands": "Rejoignez des milliers de passionnés d'audio qui utilisent Edit-All pour créer des sons parfaits chaque jour.",
+        "tryEditor": "Essayer l'Éditeur Audio"
+    },
+    "sounds": {
+        "title": "Bibliothèque Audio Ouverte",
+        "subtitle": "Effets sonores et boucles open-source de haute qualité pour vos projets. Gratuit à télécharger et à utiliser.",
+        "table": {
+            "preview": "Aperçu",
+            "name": "Nom",
+            "category": "Catégorie",
+            "duration": "Durée",
+            "download": "Télécharger"
+        },
+        "tryEditor": "Essayer l'Éditeur Audio"
+    },
+    "gallery": {
+        "title": "Galerie d'Images Ouverte",
+        "subtitle": "Découvrez et téléchargez des packages d'images créatives pour vos projets de design, applications, et plus encore.",
+        "items": "éléments",
+        "download": "Télécharger le Pack",
+        "viewCollection": "Voir la Collection",
+        "backToGallery": "Retour à la Galerie",
+        "share": "Partager",
+        "downloadAll": "Tout Télécharger"
     }
 }

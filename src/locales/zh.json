@@ -1,7 +1,8 @@
 {
     "nav": {
         "about": "关于",
-        "blog": "博客",
+        "sounds": "音频",
+        "gallery": "画廊",
         "tryEditor": "试用编辑器"
     },
     "home": {
@@ -80,5 +81,27 @@
         "enjoyedArticle": "喜欢这篇文章吗？",
         "joinThousands": "加入成千上万每天使用Edit-All创造完美声音的音频爱好者。",
         "tryEditor": "试用音频编辑器"
+    },
+    "sounds": {
+        "title": "开放音频库",
+        "subtitle": "为您的项目提供高质量、开源的音频效果和循环。免费下载和使用。",
+        "table": {
+            "preview": "预览",
+            "name": "名称",
+            "category": "类别",
+            "duration": "时长",
+            "download": "下载"
+        },
+        "tryEditor": "试用音频编辑器"
+    },
+    "gallery": {
+        "title": "开放图片库",
+        "subtitle": "为您的设计项目、应用程序等发现并下载创意图像包。",
+        "items": "个项目",
+        "download": "下载包",
+        "viewCollection": "查看集合",
+        "backToGallery": "返回画廊",
+        "share": "分享",
+        "downloadAll": "全部下载"
     }
 }

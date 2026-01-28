@@ -2,7 +2,9 @@
     "nav": {
         "about": "Über uns",
         "blog": "Blog",
-        "tryEditor": "Editor ausprobieren"
+        "tryEditor": "Editor ausprobieren",
+        "sounds": "Sounds",
+        "gallery": "Gallery"
     },
     "home": {
         "hero": {
@@ -80,5 +82,27 @@
         "enjoyedArticle": "Enjoyed this article?",
         "joinThousands": "Join thousands of audio enthusiasts using Edit-All to create perfect sounds every day.",
         "tryEditor": "Try the Audio Editor"
+    },
+    "sounds": {
+        "title": "Open Audio Library",
+        "subtitle": "High-quality, open-source sound effects and loops for your projects. Free to download and use.",
+        "table": {
+            "preview": "Preview",
+            "name": "Name",
+            "category": "Category",
+            "duration": "Duration",
+            "download": "Download"
+        },
+        "tryEditor": "Try Audio Editor"
+    },
+    "gallery": {
+        "title": "Open Image Gallery",
+        "subtitle": "Discover and download creative image packages for your design projects, apps, and more.",
+        "items": "items",
+        "download": "Download Pack",
+        "viewCollection": "View Collection",
+        "backToGallery": "Back to Gallery",
+        "share": "Share",
+        "downloadAll": "Download All"
     }
 }

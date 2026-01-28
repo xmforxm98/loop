@@ -1,7 +1,8 @@
 {
     "nav": {
         "about": "소개",
-        "blog": "블로그",
+        "sounds": "소리",
+        "gallery": "갤러리",
         "tryEditor": "에디터 사용하기"
     },
     "home": {
@@ -71,14 +72,26 @@
             "button": "팀에게 문의하기"
         }
     },
-    "blog": {
-        "title": "Edit-All 블로그",
-        "subtitle": "브라우저 기반 오디오 제작 세계에 대한 통찰력, 튜토리얼, 그리고 심층 분석.",
-        "readMore": "더 읽기",
-        "backToBlog": "블로그로 돌아가기",
-        "sharePost": "포스트 공유",
-        "enjoyedArticle": "이 글이 유익했나요?",
-        "joinThousands": "매일 완벽한 사운드를 만드는 수천 명의 오디오 애호가들과 함께하세요.",
+    "sounds": {
+        "title": "오픈 오디오 라이브러리",
+        "subtitle": "프로젝트를 위한 고품질 오픈 소스 사운드 이펙트 및 루프. 무료로 다운로드하여 사용하세요.",
+        "table": {
+            "preview": "미리보기",
+            "name": "이름",
+            "category": "카테고리",
+            "duration": "재생 시간",
+            "download": "다운로드"
+        },
         "tryEditor": "오디오 에디터 사용해보기"
+    },
+    "gallery": {
+        "title": "오픈 이미지 갤러리",
+        "subtitle": "디자인 프로젝트, 앱 등을 위한 창의적인 이미지 패키지를 찾아보고 다운로드하세요.",
+        "items": "개 항목",
+        "download": "패키지 다운로드",
+        "viewCollection": "컬렉션 보기",
+        "backToGallery": "갤러리로 돌아가기",
+        "share": "공유하기",
+        "downloadAll": "전체 다운로드"
     }
 }

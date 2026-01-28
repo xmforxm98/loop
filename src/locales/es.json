@@ -72,13 +72,35 @@
         }
     },
     "blog": {
-        "title": "The Edit-All Blog",
-        "subtitle": "Insights, tutorials, and deep dives into the world of browser-based audio production.",
-        "readMore": "Read More",
-        "backToBlog": "Back to Blog",
-        "sharePost": "Share Post",
-        "enjoyedArticle": "Enjoyed this article?",
-        "joinThousands": "Join thousands of audio enthusiasts using Edit-All to create perfect sounds every day.",
-        "tryEditor": "Try the Audio Editor"
+        "title": "El Blog de Edit-All",
+        "subtitle": "Perspectivas, tutoriales y exploraciones profundas en el mundo de la producción de audio basada en navegador.",
+        "readMore": "Leer más",
+        "backToBlog": "Volver al blog",
+        "sharePost": "Compartir publicación",
+        "enjoyedArticle": "¿Disfrutaste este artículo?",
+        "joinThousands": "Únete a miles de entusiastas del audio que usan Edit-All para crear sonidos perfectos cada día.",
+        "tryEditor": "Probar el Editor de Audio"
+    },
+    "sounds": {
+        "title": "Biblioteca de Audio Abierta",
+        "subtitle": "Efectos de sonido y bucles de código abierto de alta calidad para tus proyectos. Gratis para descargar y usar.",
+        "table": {
+            "preview": "Vista previa",
+            "name": "Nombre",
+            "category": "Categoría",
+            "duration": "Duración",
+            "download": "Descargar"
+        },
+        "tryEditor": "Probar el Editor de Audio"
+    },
+    "gallery": {
+        "title": "Galería de Imágenes Abierta",
+        "subtitle": "Descubre y descarga paquetes de imágenes creativas para tus proyectos de diseño, aplicaciones y más.",
+        "items": "elementos",
+        "download": "Descargar Pack",
+        "viewCollection": "Ver Colección",
+        "backToGallery": "Volver a la Galería",
+        "share": "Compartir",
+        "downloadAll": "Descargar Todo"
     }
 }

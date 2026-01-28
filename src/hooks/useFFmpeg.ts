@@ -7,15 +7,15 @@ export const useFFmpeg = () => {
     const [loaded, setLoaded] = useState(false);
     const [loading, setLoading] = useState(false);
     const [ffmpeg, setFfmpeg] = useState<FFmpeg | null>(null);
-    const loadPromiseRef = useRef<Promise<boolean> | null>(null);
+    const loadPromiseRef = useRef<Promise<FFmpeg | null> | null>(null);
     const [progress, setProgress] = useState(0);
     const [logs, setLogs] = useState<string[]>([]);
 
-    const load = useCallback(async () => {
-        if (loaded && ffmpeg) return true;
-        if (loadPromiseRef.current) return loadPromiseRef.current;
+    const load = useCallback(async (): Promise<FFmpeg | null> => {
+        if (loaded && ffmpeg) return ffmpeg;
+        if (loadPromiseRef.current) return loadPromiseRef.current as Promise<FFmpeg | null>;
 
-        const task = (async () => {
+        const loadTask = async (): Promise<FFmpeg | null> => {
             setLoading(true);
             const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
 
@@ -37,17 +37,18 @@ export const useFFmpeg = () => {
                     wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
                 });
                 setLoaded(true);
-                return true;
+                return instance;
             } catch (error) {
                 console.error("FFmpeg load error:", error);
-                return false;
+                return null;
             } finally {
                 setLoading(false);
                 loadPromiseRef.current = null;
             }
-        })();
+        };
 
-        loadPromiseRef.current = task;
+        const task = loadTask();
+        loadPromiseRef.current = task as any;
         return task;
     }, [loaded, ffmpeg]);
 

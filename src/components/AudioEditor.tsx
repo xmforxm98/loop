@@ -21,6 +21,7 @@ import {
     RotateCcw
 } from "lucide-react";
 import { fetchFile } from "@ffmpeg/util";
+import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { useFFmpeg } from "@/hooks/useFFmpeg";
 import "../app/audio-editor.css"; // Adjusted relative path
 import { useTranslations } from 'next-intl';
@@ -28,7 +29,7 @@ import { Link } from '@/i18n/routing';
 
 import WaveformTrimmer from "@/components/WaveformTrimmer";
 import AdBanner from "@/components/AdBanner";
-import { blogPosts } from "@/lib/blog-data";
+
 
 type Tool = "merge" | "loop" | "extend" | "trim";
 
@@ -92,12 +93,14 @@ export default function AudioEditor() {
             return;
         }
 
-        if (!loaded) {
-            const success = await load();
-            if (success === false) {
+        let currentFFmpeg = ffmpeg;
+        if (!loaded || !currentFFmpeg) {
+            const instance = await load();
+            if (!instance) {
                 setError("Could not load the processing engine. Please check your internet connection and try again.");
                 return;
             }
+            currentFFmpeg = instance;
         }
 
         setIsProcessing(true);
@@ -106,13 +109,13 @@ export default function AudioEditor() {
 
         try {
             if (activeTool === "merge") {
-                await processMerge();
+                await processMerge(currentFFmpeg);
             } else if (activeTool === "loop") {
-                await processLoop();
+                await processLoop(currentFFmpeg);
             } else if (activeTool === "extend") {
-                await processExtend();
+                await processExtend(currentFFmpeg);
             } else if (activeTool === "trim") {
-                await processTrim();
+                await processTrim(currentFFmpeg);
             }
 
             // Scroll to result area
@@ -127,12 +130,12 @@ export default function AudioEditor() {
         }
     };
 
-    const processMerge = async () => {
+    const processMerge = async (currentFFmpeg: FFmpeg) => {
         const fileNames: string[] = [];
         for (let i = 0; i < files.length; i++) {
             const ext = files[i].name.split(".").pop();
             const name = `input${i}.${ext}`;
-            await ffmpeg.writeFile(name, await fetchFile(files[i]));
+            await currentFFmpeg.writeFile(name, await fetchFile(files[i]));
             fileNames.push(name);
         }
 
@@ -149,44 +152,44 @@ export default function AudioEditor() {
             command = [...inputs, "-filter_complex", filter, "-map", lastLabel, outputName];
         } else {
             const concatList = fileNames.map(n => `file '${n}'`).join("\n");
-            await ffmpeg.writeFile("concat.txt", concatList);
+            await currentFFmpeg.writeFile("concat.txt", concatList);
             command = ["-f", "concat", "-safe", "0", "-i", "concat.txt", "-c", "copy", outputName];
         }
 
-        const res = await ffmpeg.exec(command);
+        const res = await currentFFmpeg.exec(command);
         if (res !== 0) throw new Error("FFmpeg execution failed");
 
-        const data = await ffmpeg.readFile(outputName);
+        const data = await currentFFmpeg.readFile(outputName);
         const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
         setResultUrl(url);
     };
 
-    const processLoop = async () => {
+    const processLoop = async (currentFFmpeg: FFmpeg) => {
         const ext = files[0].name.split(".").pop();
         const inputName = `input.${ext}`;
         const outputName = `looped_${Date.now()}.mp3`;
-        await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
-        const res = await ffmpeg.exec(["-stream_loop", (loopCount - 1).toString(), "-i", inputName, "-c", "copy", outputName]);
+        await currentFFmpeg.writeFile(inputName, await fetchFile(files[0]));
+        const res = await currentFFmpeg.exec(["-stream_loop", (loopCount - 1).toString(), "-i", inputName, "-c", "copy", outputName]);
         if (res !== 0) throw new Error("FFmpeg execution failed");
-        const data = await ffmpeg.readFile(outputName);
+        const data = await currentFFmpeg.readFile(outputName);
         const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
         setResultUrl(url);
     };
 
-    const processExtend = async () => {
+    const processExtend = async (currentFFmpeg: FFmpeg) => {
         const ext = files[0].name.split(".").pop();
         const inputName = `input.${ext}`;
         const outputName = `extended_${Date.now()}.mp3`;
-        await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
+        await currentFFmpeg.writeFile(inputName, await fetchFile(files[0]));
         const targetSeconds = targetDuration * 60;
-        const res = await ffmpeg.exec(["-stream_loop", "-1", "-i", inputName, "-t", targetSeconds.toString(), "-c", "copy", outputName]);
+        const res = await currentFFmpeg.exec(["-stream_loop", "-1", "-i", inputName, "-t", targetSeconds.toString(), "-c", "copy", outputName]);
         if (res !== 0) throw new Error("FFmpeg execution failed");
-        const data = await ffmpeg.readFile(outputName);
+        const data = await currentFFmpeg.readFile(outputName);
         const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
         setResultUrl(url);
     };
 
-    const processTrim = async () => {
+    const processTrim = async (currentFFmpeg: FFmpeg) => {
         if (segments.length === 0) {
             setError("No segments selected.");
             return;
@@ -194,7 +197,7 @@ export default function AudioEditor() {
         const ext = files[0].name.split(".").pop();
         const inputName = `input.${ext}`;
         const outputName = `trimmed_${Date.now()}.mp3`;
-        await ffmpeg.writeFile(inputName, await fetchFile(files[0]));
+        await currentFFmpeg.writeFile(inputName, await fetchFile(files[0]));
         let filter = "";
         let inputs = "";
         segments.forEach((seg, i) => {
@@ -202,7 +205,7 @@ export default function AudioEditor() {
             inputs += `[a${i}]`;
         });
         filter += `${inputs}concat=n=${segments.length}:v=0:a=1[out]`;
-        const res = await ffmpeg.exec([
+        const res = await currentFFmpeg.exec([
             "-i", inputName,
             "-filter_complex", filter,
             "-map", "[out]",
@@ -211,7 +214,7 @@ export default function AudioEditor() {
             outputName
         ]);
         if (res !== 0) throw new Error("FFmpeg execution failed");
-        const data = await ffmpeg.readFile(outputName);
+        const data = await currentFFmpeg.readFile(outputName);
         const url = URL.createObjectURL(new Blob([data as BlobPart], { type: "audio/mp3" }));
         setResultUrl(url);
     };
@@ -562,43 +565,7 @@ export default function AudioEditor() {
                 </div>
             </section>
 
-            {/* Blog Preview */}
-            <section className="mt-40 max-w-6xl mx-auto px-6">
-                <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
-                    <div className="text-left">
-                        <h6 className="text-primary font-black uppercase tracking-[0.2em] text-xs mb-3">Resources</h6>
-                        <h2 className="text-4xl md:text-5xl font-black outfit">{t('recentPosts')}</h2>
-                    </div>
-                    <Link href="/blog" className="px-8 py-3 bg-white border border-slate-200 rounded-full text-slate-600 font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center gap-2 group shadow-sm">
-                        {t('viewAllPosts')} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
-                    {blogPosts.slice(0, 3).map((post) => (
-                        <Link
-                            key={post.slug}
-                            href={`/blog/${post.slug}`}
-                            className="glass p-2 rounded-[2.5rem] border-white/10 hover:border-primary/20 transition-all group block shadow-md hover:shadow-2xl"
-                        >
-                            <div className="relative overflow-hidden rounded-[2rem]">
-                                <img
-                                    src={post.image}
-                                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                                    alt={post.title}
-                                />
-                                <div className="absolute top-4 left-4">
-                                    <span className="px-4 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-primary shadow-sm">Article</span>
-                                </div>
-                            </div>
-                            <div className="p-6 text-left">
-                                <h4 className="text-xl font-black mb-3 outfit group-hover:text-primary transition-colors line-clamp-2 leading-tight">{post.title}</h4>
-                                <p className="text-xs text-secondary font-medium line-clamp-2 leading-relaxed opacity-80">{post.excerpt}</p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            </section>
 
             {/* Feedback Trigger */}
             <section className="mt-32 text-center pb-20">
