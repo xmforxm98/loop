@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { Download, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import MainGalleryDownloadButton from "@/components/MainGalleryDownloadButton";
 
 export function generateStaticParams() {
     return routing.locales.map((locale) => ({ locale }));
@@ -64,9 +65,10 @@ export default async function GalleryPage({
                                         <ExternalLink size={20} />
                                         {t('viewCollection')}
                                     </Link>
-                                    <button className="px-6 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 hover:text-slate-900 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
-                                        <Download size={20} />
-                                    </button>
+                                    <MainGalleryDownloadButton
+                                        thumbnailUrl={pkg.thumbnail}
+                                        title={pkg.title}
+                                    />
                                 </div>
                             </div>
                         </div>
