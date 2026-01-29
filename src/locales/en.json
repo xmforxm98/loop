@@ -107,7 +107,7 @@
         "tarotPackage": {
             "title": "Tarot Assets (Major Arcana)",
             "desc": "A set of 88 high-quality Tarot card images (22 cards x 4 variations). Perfect for fortune-telling apps, games, or spiritual websites.",
-            "install": "npm install @edit-all/tarot-assets"
+            "install": "npm install @username231/tarot-assets"
         },
         "benefit": {
             "title": "Why use our assets?",

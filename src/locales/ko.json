@@ -107,7 +107,7 @@
         "tarotPackage": {
             "title": "타로 에셋 (메이저 아르카나)",
             "desc": "88개의 고품질 타로 카드 이미지(22장 x 4가지 변형). 타로 앱, 게임, 또는 신비주의 웹사이트에 완벽합니다.",
-            "install": "npm install @edit-all/tarot-assets"
+            "install": "npm install @username231/tarot-assets"
         },
         "benefit": {
             "title": "왜 우리 에셋을 사용해야 하나요?",

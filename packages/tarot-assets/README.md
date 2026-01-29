@@ -1,11 +1,11 @@
-# @edit-all/tarot-assets
+# @username231/tarot-assets
 
 Premium Tarot Card Assets (Major Arcana) with 4 unique artistic variations for each card.
 
 ## Usage
 
 ```javascript
-const { tarotAssets } = require('@edit-all/tarot-assets');
+const { tarotAssets } = require('@username231/tarot-assets');
 
 // Get all versions of 'The Fool'
 const theFoolCards = tarotAssets.filter(asset => asset.cardName === 'foolcrown');
