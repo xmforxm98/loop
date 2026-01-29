@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Terminal, Package, Sparkles, TrendingUp, Code, Copy, Check } from 'lucide-react';
+import { Terminal, Package, Sparkles, TrendingUp, Code, Copy, Check, FlaskConical } from 'lucide-react';
 import AdBanner from '@/components/AdBanner';
+import { Link } from '@/i18n/routing';
 
 export default async function DevelopersPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
@@ -50,6 +51,25 @@ export default async function DevelopersPage({ params }: { params: Promise<{ loc
                                 <Copy size={16} />
                             </button>
                         </div>
+                    </div>
+
+                    {/* DIY Lab Teaser */}
+                    <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-blue-600 rounded-lg text-white">
+                                <FlaskConical size={20} />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">{t('diyTeaser.title')}</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-6">
+                            {t('diyTeaser.desc')}
+                        </p>
+                        <Link
+                            href="/developers/diy-lab"
+                            className="inline-flex items-center justify-center w-full py-3 bg-white border-2 border-blue-600 text-blue-600 font-bold rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                        >
+                            {t('diyTeaser.link')}
+                        </Link>
                     </div>
                 </div>
 

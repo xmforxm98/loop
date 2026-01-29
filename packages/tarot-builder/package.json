@@ -1,0 +1,15 @@
+{
+    "name": "@username231/tarot-builder",
+    "version": "1.0.0",
+    "description": "A DIY Tarot Card building system. Mix and match layers to create unique tarot cards.",
+    "main": "index.js",
+    "keywords": [
+        "tarot",
+        "diy",
+        "builder",
+        "assets",
+        "game-dev"
+    ],
+    "author": "Edit-All",
+    "license": "MIT"
+}

@@ -120,7 +120,19 @@
         },
         "monetization": {
             "title": "Our Business Model",
-            "desc": "These assets are free because of our community. By using them, you help drive traffic to our platform, which allows us to keep everything free through non-intrusive ads."
+            "desc": "These assets are free thanks to our community. By using them, you help drive traffic to our platform, which allows us to keep everything free through non-intrusive ads."
+        },
+        "diyLab": {
+            "title": "DIY Tarot Lab",
+            "subtitle": "Mix, match, and customize your own Tarot cards using our modular engine.",
+            "selectCard": "Select Base Card",
+            "selectStyle": "Select Artistic Style",
+            "preview": "Live Preview"
+        },
+        "diyTeaser": {
+            "title": "DIY Tarot Lab",
+            "desc": "Want to mix and match styles? Try our DIY Lab to customize your own spiritual assets.",
+            "link": "Open DIY Lab"
         }
     }
 }
