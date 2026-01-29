@@ -4,7 +4,8 @@
         "blog": "Blog",
         "tryEditor": "Editor ausprobieren",
         "sounds": "Sounds",
-        "gallery": "Gallery"
+        "gallery": "Gallery",
+        "developers": "Entwickler"
     },
     "home": {
         "hero": {
@@ -106,5 +107,31 @@
         "backToGallery": "Back to Gallery",
         "share": "Share",
         "downloadAll": "Download All"
+    },
+    "developers": {
+        "title": "Für Entwickler",
+        "subtitle": "Erhalten Sie unsere hochwertigen Assets über NPM und bauen Sie großartige Dinge.",
+        "npmSection": {
+            "title": "NPM-Pakete",
+            "desc": "Wir bieten modulare Asset-Pakete an, die Sie einfach in Ihre Web- oder Spieleprojekte integrieren können."
+        },
+        "tarotPackage": {
+            "title": "Tarot-Assets (Große Arkana)",
+            "desc": "Ein Satz von 88 hochwertigen Tarotkarten-Bildern (22 Karten x 4 Variationen). Perfekt für Wahrsage-Apps, Spiele oder spirituelle Websites.",
+            "install": "npm install @username231/tarot-assets"
+        },
+        "benefit": {
+            "title": "Warum unsere Assets nutzen?",
+            "items": [
+                "Kostenlose, hochwertige Medien",
+                "Zuverlässige CDN-Bereitstellung",
+                "Regelmäßig aktualisierte Kollektionen",
+                "Unterstützung von Open-Source-Kreativität"
+            ]
+        },
+        "monetization": {
+            "title": "Unser Geschäftsmodell",
+            "desc": "Diese Assets sind dank unserer Community kostenlos. Durch ihre Nutzung tragen Sie dazu bei, Traffic auf unsere Plattform zu lenken, was es uns ermöglicht, alles durch nicht-invasive Werbung kostenlos zu halten."
+        }
     }
 }

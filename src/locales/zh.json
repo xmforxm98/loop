@@ -3,6 +3,7 @@
         "about": "关于",
         "sounds": "音频",
         "gallery": "画廊",
+        "developers": "开发者",
         "tryEditor": "试用编辑器"
     },
     "home": {
@@ -105,5 +106,31 @@
         "backToGallery": "返回画廊",
         "share": "分享",
         "downloadAll": "全部下载"
+    },
+    "developers": {
+        "title": "开发者中心",
+        "subtitle": "通过 NPM 获取我们的高质量资源，构建出色的项目。",
+        "npmSection": {
+            "title": "NPM 软件包",
+            "desc": "我们提供模块化的资源包，您可以轻松地将其集成到您的网页或游戏项目中。"
+        },
+        "tarotPackage": {
+            "title": "塔罗牌资源 (大阿卡纳)",
+            "desc": "一套 88 张高质量塔罗牌图像（22 张牌 x 4 种变化）。非常适合占卜应用、游戏或灵性网站。",
+            "install": "npm install @username231/tarot-assets"
+        },
+        "benefit": {
+            "title": "为什么使用我们的资源？",
+            "items": [
+                "零成本、高质量媒体",
+                "可靠的 CDN 交付",
+                "定期更新的收藏",
+                "支持开源创意"
+            ]
+        },
+        "monetization": {
+            "title": "我们的商业模式",
+            "desc": "这些资源由于我们的社区而免费。通过使用它们，您有助于为我们的平台带来流量，这使我们能够通过非侵入性广告保持一切免费。"
+        }
     }
 }
