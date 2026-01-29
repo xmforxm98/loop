@@ -92,6 +92,8 @@
             "duration": "时长",
             "download": "下载"
         },
+        "searchPlaceholder": "搜索声音...",
+        "noResults": "未找到结果。",
         "tryEditor": "试用音频编辑器"
     },
     "gallery": {

@@ -3,6 +3,7 @@
         "about": "About",
         "sounds": "Sounds",
         "gallery": "Gallery",
+        "developers": "Developers",
         "tryEditor": "Try Editor"
     },
     "home": {
@@ -82,6 +83,8 @@
             "duration": "Duration",
             "download": "Download"
         },
+        "searchPlaceholder": "Search sounds...",
+        "noResults": "No results found.",
         "tryEditor": "Try Audio Editor"
     },
     "gallery": {
@@ -93,5 +96,31 @@
         "backToGallery": "Back to Gallery",
         "share": "Share",
         "downloadAll": "Download All"
+    },
+    "developers": {
+        "title": "For Developers",
+        "subtitle": "Get our high-quality assets via NPM and build amazing things.",
+        "npmSection": {
+            "title": "NPM Packages",
+            "desc": "We provide modular asset packages that you can easily integrate into your web or game projects."
+        },
+        "tarotPackage": {
+            "title": "Tarot Assets (Major Arcana)",
+            "desc": "A set of 88 high-quality Tarot card images (22 cards x 4 variations). Perfect for fortune-telling apps, games, or spiritual websites.",
+            "install": "npm install @edit-all/tarot-assets"
+        },
+        "benefit": {
+            "title": "Why use our assets?",
+            "items": [
+                "Zero-cost, high-quality media",
+                "Reliable CDN delivery",
+                "Regularly updated collections",
+                "Support open-source creativity"
+            ]
+        },
+        "monetization": {
+            "title": "Our Business Model",
+            "desc": "These assets are free because of our community. By using them, you help drive traffic to our platform, which allows us to keep everything free through non-intrusive ads."
+        }
     }
 }

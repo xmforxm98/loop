@@ -38,6 +38,7 @@ export default function Navbar({ locale }: NavbarProps) {
         { name: t('about'), href: "/about" },
         { name: t('sounds'), href: "/sounds" },
         { name: t('gallery'), href: "/gallery" },
+        { name: t('developers'), href: "/developers" },
     ];
 
     return (

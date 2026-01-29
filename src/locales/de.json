@@ -93,6 +93,8 @@
             "duration": "Duration",
             "download": "Download"
         },
+        "searchPlaceholder": "Sounds suchen...",
+        "noResults": "Keine Ergebnisse gefunden.",
         "tryEditor": "Try Audio Editor"
     },
     "gallery": {

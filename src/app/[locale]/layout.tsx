@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing } from '@/i18n/routing';
+import { Link, routing } from '@/i18n/routing';
 
 export const metadata: Metadata = {
   title: "Edit-All | Unlimited Browser-based Audio Editor",
@@ -56,7 +56,11 @@ export default async function RootLayout({
               <p className="text-gray-600 text-sm mb-4">
                 &copy; {new Date().getFullYear()} Edit-All Audio Editor.
               </p>
-              {/* Footer translation will be handled inside a client component or simplified here */}
+              <div className="flex justify-center gap-6 text-sm text-gray-500">
+                <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
+                <Link href="/developers" className="hover:text-blue-600 transition-colors">Developers</Link>
+                <Link href="/gallery" className="hover:text-blue-600 transition-colors">Gallery</Link>
+              </div>
             </div>
           </footer>
         </NextIntlClientProvider>

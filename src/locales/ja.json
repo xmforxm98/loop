@@ -92,6 +92,8 @@
             "duration": "長さ",
             "download": "ダウンロード"
         },
+        "searchPlaceholder": "サウンドを検索...",
+        "noResults": "結果が見つかりませんでした。",
         "tryEditor": "オー디오エディターを試す"
     },
     "gallery": {

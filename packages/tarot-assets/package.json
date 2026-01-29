@@ -1,0 +1,23 @@
+{
+    "name": "@edit-all/tarot-assets",
+    "version": "1.0.0",
+    "description": "Premium Tarot Card Assets (Major Arcana) with multiple variations. Provided by Edit-All.",
+    "main": "index.js",
+    "keywords": [
+        "tarot",
+        "major-arcana",
+        "assets",
+        "images",
+        "fortune-telling"
+    ],
+    "author": "Edit-All",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/xmforxm98/loop.git"
+    },
+    "bugs": {
+        "url": "https://github.com/xmforxm98/loop/issues"
+    },
+    "homepage": "https://edit-all.web.app"
+}
