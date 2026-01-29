@@ -646,6 +646,11 @@ export default function AudioEditor() {
                                                 const body = encodeURIComponent(feedbackBody);
                                                 window.open(`mailto:xmforxm98@gmail.com?subject=${subject}&body=${body}`, '_blank');
                                                 setFeedbackSent(true);
+                                                gtag.event({
+                                                    action: 'submit_feedback',
+                                                    category: 'engagement',
+                                                    label: 'mailto'
+                                                });
                                             }}
                                             className="btn btn-primary w-full py-5 text-xl font-black outfit rounded-[1.8rem] shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50"
                                         >

@@ -84,6 +84,7 @@ export default async function RootLayout({
               <div className="flex justify-center gap-6 text-sm text-gray-500">
                 <Link href="/about" className="hover:text-blue-600 transition-colors">About</Link>
                 <Link href="/developers" className="hover:text-blue-600 transition-colors">Developers</Link>
+                <Link href="/developers/diy-lab" className="hover:text-blue-600 transition-colors">DIY Lab</Link>
                 <Link href="/gallery" className="hover:text-blue-600 transition-colors">Gallery</Link>
               </div>
             </div>
