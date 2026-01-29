@@ -1,11 +1,11 @@
-import React from 'react';
-import { useTranslations } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Terminal, Package, Sparkles, TrendingUp, Code, Copy, Check } from 'lucide-react';
-import { setRequestLocale } from 'next-intl/server';
+import AdBanner from '@/components/AdBanner';
 
-export default function DevelopersPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function DevelopersPage({ params }: { params: Promise<{ locale: string }> }) {
+    const { locale } = await params;
     setRequestLocale(locale);
-    const t = useTranslations('developers');
+    const t = await getTranslations('developers');
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-12">
@@ -18,10 +18,8 @@ export default function DevelopersPage({ params: { locale } }: { params: { local
                 </p>
             </div>
 
-            {/* Ad Placeholder */}
-            <div className="w-full h-32 bg-gray-100 rounded-xl flex items-center justify-center mb-16 border-2 border-dashed border-gray-300">
-                <span className="text-gray-400 font-medium">Advertisement Area</span>
-            </div>
+            {/* Top Ad Unit */}
+            <AdBanner dataAdSlot="6207739501" />
 
             <div className="grid md:grid-cols-2 gap-12 mb-20">
                 {/* NPM Section */}
@@ -88,10 +86,8 @@ export default function DevelopersPage({ params: { locale } }: { params: { local
                 <Code className="absolute -bottom-10 -right-10 text-white/5 w-64 h-64 rotate-12" />
             </div>
 
-            {/* Ad Placeholder Bottom */}
-            <div className="w-full h-64 bg-gray-100 rounded-xl flex items-center justify-center mt-20 border-2 border-dashed border-gray-300">
-                <span className="text-gray-400 font-medium">Responsive Ad Unit</span>
-            </div>
+            {/* Bottom Ad Unit */}
+            <AdBanner dataAdSlot="6207739501" />
         </div>
     );
 }

@@ -286,7 +286,7 @@ export default function AudioEditor() {
             </section>
 
             {/* Top Ad Unit */}
-            <AdBanner dataAdSlot="XXXXXXXXXX" />
+            <AdBanner dataAdSlot="6207739501" />
 
             {/* Main Action Area */}
             <section ref={editorRef} className="max-w-4xl mx-auto transition-all duration-500 scroll-mt-20" id="editor">
