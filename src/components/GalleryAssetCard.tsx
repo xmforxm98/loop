@@ -3,6 +3,7 @@
 import React from "react";
 import { Download } from "lucide-react";
 import { ImageAsset } from "@/lib/gallery-data";
+import * as gtag from "@/lib/gtag";
 
 interface GalleryAssetCardProps {
     asset: ImageAsset;
@@ -22,6 +23,11 @@ export default function GalleryAssetCard({ asset, downloadLabel }: GalleryAssetC
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
+            gtag.event({
+                action: 'download_image',
+                category: 'engagement',
+                label: asset.title
+            });
         } catch (error) {
             console.error("Download failed:", error);
             window.open(asset.url, "_blank");

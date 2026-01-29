@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Sparkles, Layers, Wand2, Download, Package } from 'lucide-react';
 import Image from 'next/image';
+import * as gtag from '@/lib/gtag';
 
 const majorArcana = [
     'foolcrown', 'magician', 'highpriestess', 'theempress', 'emperor',
@@ -43,10 +44,13 @@ export default function DiyLabClient() {
                             {majorArcana.map(card => (
                                 <button
                                     key={card}
-                                    onClick={() => setSelectedCard(card)}
+                                    onClick={() => {
+                                        setSelectedCard(card);
+                                        gtag.event({ action: 'diy_select_card', category: 'diy_lab', label: card });
+                                    }}
                                     className={`px-3 py-2 text-xs rounded-lg border transition-all ${selectedCard === card
-                                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
                                         }`}
                                 >
                                     {card.charAt(0).toUpperCase() + card.slice(1)}
@@ -64,10 +68,13 @@ export default function DiyLabClient() {
                             {styles.map(style => (
                                 <button
                                     key={style.id}
-                                    onClick={() => setSelectedStyle(style.id)}
+                                    onClick={() => {
+                                        setSelectedStyle(style.id);
+                                        gtag.event({ action: 'diy_select_style', category: 'diy_lab', label: style.name });
+                                    }}
                                     className={`px-6 py-3 rounded-xl border-2 transition-all flex items-center gap-3 ${selectedStyle === style.id
-                                            ? 'border-purple-600 bg-purple-50 text-purple-900'
-                                            : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-purple-200'
+                                        ? 'border-purple-600 bg-purple-50 text-purple-900'
+                                        : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-purple-200'
                                         }`}
                                 >
                                     <div className={`w-4 h-4 rounded-full ${style.color}`} />
@@ -111,7 +118,21 @@ export default function DiyLabClient() {
                         </div>
                     </div>
 
-                    <button className="mt-8 w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-xl active:scale-95">
+                    <button
+                        onClick={() => {
+                            // Link to current image for download
+                            const a = document.createElement('a');
+                            a.href = currentUrl;
+                            a.download = `tarot-${selectedCard}-${selectedStyle}.png`;
+                            a.click();
+                            gtag.event({
+                                action: 'diy_download',
+                                category: 'diy_lab',
+                                label: `${selectedCard}-${selectedStyle}`
+                            });
+                        }}
+                        className="mt-8 w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all shadow-xl active:scale-95"
+                    >
                         <Download size={20} />
                         Download Customized Card
                     </button>

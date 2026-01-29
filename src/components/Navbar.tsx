@@ -4,6 +4,7 @@ import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { Music, Menu, X, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from 'next-intl';
+import * as gtag from "@/lib/gtag";
 
 interface NavbarProps {
     locale: string;
@@ -32,6 +33,11 @@ export default function Navbar({ locale }: NavbarProps) {
     const handleLanguageChange = (newLocale: string) => {
         router.replace(pathname, { locale: newLocale });
         setIsLangMenuOpen(false);
+        gtag.event({
+            action: 'change_language',
+            category: 'ui',
+            label: newLocale
+        });
     };
 
     const navLinks = [
@@ -94,6 +100,13 @@ export default function Navbar({ locale }: NavbarProps) {
 
                         <Link
                             href="/#editor"
+                            onClick={() => {
+                                gtag.event({
+                                    action: 'click_try_editor',
+                                    category: 'conversion',
+                                    label: 'navbar'
+                                });
+                            }}
                             className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
                         >
                             {t('tryEditor')}

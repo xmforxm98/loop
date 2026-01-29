@@ -6,6 +6,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Link, routing } from '@/i18n/routing';
+import { GA_MEASUREMENT_ID } from "@/lib/gtag";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: "Edit-All | Unlimited Browser-based Audio Editor",
@@ -46,8 +49,30 @@ export default async function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        {/* Google Analytics */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_MEASUREMENT_ID}', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
       </head>
       <body>
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
         <NextIntlClientProvider messages={messages}>
           <Navbar locale={locale} />
           <main className="pt-16 min-h-screen">{children}</main>

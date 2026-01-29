@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { SoundItem } from "@/lib/sounds-data";
 import { Play, Pause, Download, Volume2 } from "lucide-react";
+import * as gtag from "@/lib/gtag";
 
 interface SoundListProps {
     items: SoundItem[];
@@ -42,6 +43,11 @@ export default function SoundList({ items, labels }: SoundListProps) {
                 audioRef.current.play();
             }
             setPlayingId(item.id);
+            gtag.event({
+                action: 'preview_sound',
+                category: 'engagement',
+                label: item.title
+            });
         }
     };
 
@@ -130,6 +136,13 @@ export default function SoundList({ items, labels }: SoundListProps) {
                                             download
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            onClick={() => {
+                                                gtag.event({
+                                                    action: 'download_sound',
+                                                    category: 'engagement',
+                                                    label: item.title
+                                                });
+                                            }}
                                             className="inline-flex items-center justify-center w-10 h-10 text-slate-400 hover:text-blue-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                                         >
                                             <Download size={20} />

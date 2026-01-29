@@ -29,6 +29,7 @@ import { Link } from '@/i18n/routing';
 
 import WaveformTrimmer from "@/components/WaveformTrimmer";
 import AdBanner from "@/components/AdBanner";
+import * as gtag from "@/lib/gtag";
 
 
 type Tool = "merge" | "loop" | "extend" | "trim";
@@ -127,6 +128,11 @@ export default function AudioEditor() {
             setError(err instanceof Error ? err.message : "An error occurred during processing. Please try again.");
         } finally {
             setIsProcessing(false);
+            gtag.event({
+                action: 'process_audio',
+                category: 'editor',
+                label: activeTool,
+            });
         }
     };
 
@@ -221,6 +227,11 @@ export default function AudioEditor() {
 
     const downloadResult = () => {
         if (resultUrl) {
+            gtag.event({
+                action: 'download_result',
+                category: 'editor',
+                label: activeTool,
+            });
             const a = document.createElement("a");
             a.href = resultUrl;
             const toolSuffix = activeTool.charAt(0).toUpperCase() + activeTool.slice(1);
@@ -246,7 +257,10 @@ export default function AudioEditor() {
                         whileHover={{ y: -5 }}
                         whileTap={{ scale: 0.98 }}
                         className={`tool-card ${activeTool === "merge" ? "active" : ""}`}
-                        onClick={() => { setActiveTool("merge"); setFiles([]); setError(null); setResultUrl(null); }}
+                        onClick={() => {
+                            setActiveTool("merge"); setFiles([]); setError(null); setResultUrl(null);
+                            gtag.event({ action: 'select_tool', category: 'editor', label: 'merge' });
+                        }}
                     >
                         <div className="icon-box"><Layers size={28} /></div>
                         <h3 className="text-xl font-bold mb-2">{t('tools.merge.title')}</h3>
@@ -256,7 +270,10 @@ export default function AudioEditor() {
                         whileHover={{ y: -5 }}
                         whileTap={{ scale: 0.98 }}
                         className={`tool-card ${activeTool === "loop" ? "active" : ""}`}
-                        onClick={() => { setActiveTool("loop"); setFiles([]); setError(null); setResultUrl(null); }}
+                        onClick={() => {
+                            setActiveTool("loop"); setFiles([]); setError(null); setResultUrl(null);
+                            gtag.event({ action: 'select_tool', category: 'editor', label: 'loop' });
+                        }}
                     >
                         <div className="icon-box"><Repeat size={28} /></div>
                         <h3 className="text-xl font-bold mb-2">{t('tools.loop.title')}</h3>
@@ -266,7 +283,10 @@ export default function AudioEditor() {
                         whileHover={{ y: -5 }}
                         whileTap={{ scale: 0.98 }}
                         className={`tool-card ${activeTool === "extend" ? "active" : ""}`}
-                        onClick={() => { setActiveTool("extend"); setFiles([]); setError(null); setResultUrl(null); }}
+                        onClick={() => {
+                            setActiveTool("extend"); setFiles([]); setError(null); setResultUrl(null);
+                            gtag.event({ action: 'select_tool', category: 'editor', label: 'extend' });
+                        }}
                     >
                         <div className="icon-box"><Clock size={28} /></div>
                         <h3 className="text-xl font-bold mb-2">{t('tools.extend.title')}</h3>
@@ -276,7 +296,10 @@ export default function AudioEditor() {
                         whileHover={{ y: -5 }}
                         whileTap={{ scale: 0.98 }}
                         className={`tool-card ${activeTool === "trim" ? "active" : ""}`}
-                        onClick={() => { setActiveTool("trim"); setFiles([]); setError(null); setResultUrl(null); }}
+                        onClick={() => {
+                            setActiveTool("trim"); setFiles([]); setError(null); setResultUrl(null);
+                            gtag.event({ action: 'select_tool', category: 'editor', label: 'trim' });
+                        }}
                     >
                         <div className="icon-box"><Scissors size={28} /></div>
                         <h3 className="text-xl font-bold mb-2">{t('tools.trim.title')}</h3>

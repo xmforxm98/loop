@@ -3,6 +3,7 @@
 import React from "react";
 import { Download, Share2 } from "lucide-react";
 import { ImageAsset } from "@/lib/gallery-data";
+import * as gtag from "@/lib/gtag";
 
 interface GalleryDetailClientProps {
     pkgTitle: string;
@@ -22,6 +23,11 @@ export default function GalleryDetailClient({ pkgTitle, assets, labels }: Galler
                     title: pkgTitle,
                     text: `Check out this image collection: ${pkgTitle}`,
                     url: window.location.href,
+                });
+                gtag.event({
+                    action: 'share_gallery',
+                    category: 'engagement',
+                    label: pkgTitle
                 });
             } catch (err) {
                 console.error("Error sharing:", err);
@@ -63,6 +69,11 @@ export default function GalleryDetailClient({ pkgTitle, assets, labels }: Galler
             // Add a small delay
             await new Promise(resolve => setTimeout(resolve, 500));
         }
+        gtag.event({
+            action: 'download_all_gallery',
+            category: 'engagement',
+            label: pkgTitle
+        });
         if (assets.length > 5) {
             alert("Downloaded the first 5 images. For the full collection, please use a desktop browser.");
         }
